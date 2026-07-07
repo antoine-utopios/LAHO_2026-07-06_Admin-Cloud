@@ -62,14 +62,39 @@ git switch <nom-branche>
 # Va conserver les fichiers et modifications de la staging area...
 git reset --soft <id-commit>
 
-# Va retirer les fichiers et modifications de la staging area...
+# Va conserver les fichiers mais pas les modifications de la staging area...
 git reset <id-commit>
 git reset --mixed <id-commit>
 
-# Va supprimer les fichiers du dépot et du working directory également...
+# Va supprimer les fichiers de la staging area et du working directory...
 git reset --hard <id-commit>
 
 # Syntaxe différente via l'utilisation de référence
 # X est ici le nombre de commits en arrière...
 git reset HEAD~X
+```
+
+## Listing des branches
+
+```bash
+git branch
+```
+
+## Création d'une nouvelle branche
+
+```bash
+git branche <branch-name>
+git branche <branch-name> <branche-ref | commit-ref> 
+```
+
+## Récupération des commits d'une branche annexe
+
+```bash
+git merge <branch-name>
+```
+
+## Déplacement de l'origine de notre branche vers un autre commit / une autre branche
+
+```bash
+git rebase <commit-id | branch-name>
 ```
