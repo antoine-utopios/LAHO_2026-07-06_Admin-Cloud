@@ -15,6 +15,7 @@ Réaliser un programme permettant à l'utilisateur de se voir offrir une success
 
 ## BONUS
 
+* Faire un système de lancement de niveau et de statistiques
 * Réaliser des classes de personnages avec des statistiques différentes pour chacune
 * Réaliser des créatures différentes de sorte à varier les ennemis
 * Réaliser des évènements potentiels entre les combats. Par exemple, un coffre au trésor à ouvrir, un piège, une source permettant de se soigner
