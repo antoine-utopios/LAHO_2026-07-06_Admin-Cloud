@@ -1,0 +1,26 @@
+cle_nombre: 12345
+cle_texte: "Du texte"
+cle_booleen: true
+
+cle_listing_vide: []
+
+cle_listing_computer_friendly: ["Texte A", 123456, false]
+
+cle_listing_user_friendly:
+  - "Texte A"
+  - 123456
+  - false
+
+cle_objet_vide: {}
+
+cle_objet_computer_friendly: { firstname: "John", lastname: "Dupont" }
+
+cle_objet_user_friendly:
+  firstname: "John"
+  lastname: "DUPONT"
+
+cle_listing_objects_user_friendly:
+  - firstname: "John"
+    lastname: "DUPONT"
+  - firstname: "Martha"
+    lastname: "SMITH"
