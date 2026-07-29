@@ -1,4 +1,51 @@
-from classes.animal import TYPES_DISPONIBLES, Animal
+class Animal:
+    """Un animal générique du refuge."""
+
+    espece = "Animal"
+
+    def __init__(self, nom: str, age: int, adopte: bool = False):
+        self.nom = nom
+        self.age = age
+        self.adopte = adopte
+
+    def ligne_tableau(self) -> str:
+        """Renvoie une ligne formatée à largeur fixe (colonnes alignées)."""
+        statut = "Adopté" if self.adopte else "Disponible"
+        return f"{self.nom:<15}{self.espece:<12}{self.age:>4} an(s)   {statut}"
+
+    def __str__(self) -> str:
+        return self.ligne_tableau()
+
+
+class Chat(Animal):
+    """Un chat du refuge."""
+
+    espece = "Chat"
+
+
+class Chien(Animal):
+    """Un chien du refuge."""
+
+    espece = "Chien"
+
+
+class Rongeur(Animal):
+    """Un rongeur du refuge (lapin, hamster, cochon d'Inde...)."""
+
+    espece = "Rongeur"
+
+
+class Reptile(Animal):
+    """Un reptile du refuge."""
+
+    espece = "Reptile"
+
+TYPES_DISPONIBLES = {
+    "1": ("Chat", Chat),
+    "2": ("Chien", Chien),
+    "3": ("Rongeur", Rongeur),
+    "4": ("Reptile", Reptile),
+}
 
 animaux: list[Animal] = []
 
