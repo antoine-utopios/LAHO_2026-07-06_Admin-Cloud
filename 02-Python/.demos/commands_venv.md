@@ -32,7 +32,7 @@ pip install nom-package
 ## Sauvegarder l'ensenble de nos paquets PIP
 
 ```bash
-pip freeze nom-fichier.txt # Généralement requirements.txt
+pip freeze > nom-fichier.txt # Généralement requirements.txt
 ```
 
 ## Installer l'ensenble de nos paquets PIP
