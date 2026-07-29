@@ -1,0 +1,14 @@
+# Mini-projet J4 — hôtes à contrôler
+# 127.0.0.1 et localhost répondent toujours ; 192.0.2.1 est une adresse
+# réservée à la documentation (RFC 5737) qui ne répond jamais : parfaite
+# pour tester le cas « hôte injoignable ».
+hotes:
+  - nom: boucle-locale
+    adresse: 127.0.0.1
+    role: test
+  - nom: localhost
+    adresse: localhost
+    role: test
+  - nom: hote-injoignable
+    adresse: 192.0.2.1
+    role: test
