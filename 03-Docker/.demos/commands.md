@@ -36,8 +36,29 @@ docker run -d <nom-image>
 # Mode profil TTY
 docker run -t <nom-image>
 
+# Choix du nom de conteneur
+docker run --name <nom-conteneur> <nom-image>
+
 # Mode port-forwarding
 docker run -p <port-hote>:<port-container> <nom-image>
+
+# Avec variable d'environemment
+docker run -e VARIABLE=valeur <nom-image>
+
+# Avec volume (anonyme)
+docker run -v /chemin/de/dossier/ou/fichier <nom-image>
+
+# Avec volume (nommé)
+docker run -v nom-volume:/chemin/de/dossier/ou/fichier <nom-image>
+
+# Avec volume (bind-mount)
+docker run -v /chemin/sur/pc/hote:/chemin/de/dossier/ou/fichier <nom-image>
+
+# Avec volume (bind-mount en lecture seule)
+docker run -v /chemin/sur/pc/hote:/chemin/de/dossier/ou/fichier:ro <nom-image>
+
+# Avec réseau
+docker run --network <nom-reseau> <nom-image>
 ```
 
 ## Lister les conteneurs
@@ -61,6 +82,30 @@ docker image ls
 docker images
 ```
 
+## Exécuter une commande dans un conteneur en cours de lancement
+
+```bash
+docker exec <container-id|container-name> command
+
+# En intéractif
+docker exec -it <container-id|container-name> command
+```
+
+## Stopper un conteneur
+
+```bash
+docker stop <container-id|container-name>
+```
+
+## Supprimer un conteneur
+
+```bash
+docker rm <container-id|container-name>
+
+# Mode forcé pour ne pas avoir à stopper en amont
+docker rm -f <container-id|container-name>
+```
+
 ## Obtenir des informations sur les ressources Docker
 
 ```bash
@@ -77,6 +122,12 @@ docker logs <container-id|container-name>
 
 ```bash
 docker commit <container-id|container-name> <image-name>
+```
+
+## Créer un réseau virtuel Docker
+
+```bash
+docker network create demo-network
 ```
 
 ## Installer NGINX sur UBUNTU
