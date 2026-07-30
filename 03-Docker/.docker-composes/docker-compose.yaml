@@ -1,0 +1,29 @@
+services:
+  db:
+    container_name: ma-db
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - "3306:3306"
+      - "33060:33060"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: always
+  website:
+    container_name: demo-website
+    build: website
+    ports:
+      - "8081:80"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  db-data: {}
+    
