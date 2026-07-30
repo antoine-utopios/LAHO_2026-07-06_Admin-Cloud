@@ -130,6 +130,18 @@ docker commit <container-id|container-name> <image-name>
 docker network create demo-network
 ```
 
+## Créer une image Docker à partir d'un Dockerfile
+
+```bash
+docker build -t nom-image:nom-tag .
+```
+
+## Copier une image Docker et en faire un autre tag
+
+```bash
+docker tag ancien-nom-image:ancien-nom-tag nouveau-nom-image:nouveau-nom-tag 
+```
+
 ## Installer NGINX sur UBUNTU
 
 ```bash
