@@ -13,14 +13,39 @@ Ce exercice vise à évaluer votre compréhension et votre maîtrise des command
    - Utilisez la commande Docker pour créer un container basé sur l'image Alpine.
    - Connectez-vous au shell du container nouvellement créé.
 
+   ```bash
+   docker pull alpine 
+   docker run -it --name exercice1 alpine
+   ```
+
 3. **Récupération d'un dépôt GitHub :**
    - À l'intérieur du container, utilisez la commande `git` pour cloner un dépôt public depuis GitHub (par exemple, https://github.com/votre-utilisateur/exemple-repo.git).
    - Allez dans le répertoire du dépôt cloné.
+
+  
 
 4. **Modification du contenu :**
    - À l'intérieur du container, ouvrez un fichier texte (par exemple, README.md) à l'aide d'un éditeur de texte disponible dans l'image Alpine.
    - Ajoutez une ligne de texte à votre choix et enregistrez le fichier.
 
+    - A l'interieur du container
+
+   ```bash
+   apk update
+   apk add git
+   apk add nano
+   git clone https://github.com/antoine-utopios/LAHO_2026-07-06_Admin-Cloud.git
+   cd LAHO_2026-07-06_Admin-Cloud
+   nano plan_classe.txt
+   ```
+   taper du texte ou modifier celui existant puis ctrl+s ctrl+x
+
 5. **Copie du résultat sur la machine locale :**
    - Depuis votre terminal local, utilisez la commande Docker pour copier le fichier modifié depuis le container vers votre machine locale, dans un répertoire de votre choix.
+
+   ```bash
+   docker cp exercice1:/LAHO_2026-07-06_Admin-Cloud/plan_classe.txt .
+   ```
+
+
 
