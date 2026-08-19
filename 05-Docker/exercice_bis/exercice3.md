@@ -55,6 +55,7 @@
    ```
 
    ```bash
+   docker exec -it exo2 bash
    find . -name index.html
    cd /usr/share/nginx/html
    apt update

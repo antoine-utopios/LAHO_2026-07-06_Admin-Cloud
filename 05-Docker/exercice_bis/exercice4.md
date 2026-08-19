@@ -116,7 +116,6 @@ docker exec -it nginx-web /bin/bash
 
 ```bash
 cd /usr/share/nginx/html
-apt upgrade
 apt update
 apt install nano
 nano index.html
@@ -132,7 +131,7 @@ docker restart nginx-web
 - Refaite la même opération mais en utilisant le serveur web apache et donc il faudra créer un autre conteneur.
 
 ```bash
-docker search apache
+docker search "apache server"
 docker pull httpd
 docker run -d -p 8083:80 --name apache-web httpd
 ```
@@ -142,7 +141,6 @@ docker run -d -p 8083:80 --name apache-web httpd
 ```bash
 docker exec -it apache-web /bin/bash
 cd /usr/local/apache2/htdocs/
-apt upgrade
 apt update
 apt install nano
 nano index.html
@@ -181,7 +179,6 @@ docker cp C:\Users\Administrateur\Desktop\Exercice\files_tp_conteneur\html5up-ed
 docker exec -it nginx-web3 bash
 cd /root
 ls
-apt upgrade
 apt update
 apt install unzip
 unzip /root/html5up-editorial-m2i.zip -d ./
@@ -195,7 +192,6 @@ docker cp C:\Users\Administrateur\Desktop\CDA_LILLE_26_OCTOBRE\19_Docker\Exercic
 docker exec -it nginx-web4 bash
 cd /root
 ls
-apt upgrade
 apt update
 apt install unzip
 unzip /root/html5up-massively.zip -d /usr/share/nginx/html
@@ -208,7 +204,6 @@ docker cp C:\Users\Administrateur\Desktop\CDA_LILLE_26_OCTOBRE\19_Docker\Exercic
 docker exec -it nginx-web5 bash
 cd /root
 ls
-apt upgrade
 apt update
 apt install unzip
 unzip /root/html5up-paradigm-shift.zip -d /usr/share/nginx/html
