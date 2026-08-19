@@ -20,7 +20,15 @@ Créez un volume nommé :
 static-site
 ```
 
+```bash
+docker volume create static-site
+```
+
 Créez ensuite un conteneur **Nginx** utilisant ce volume pour stocker les fichiers du site.
+
+```bash
+docker run -d -p 3005:80 -v static-site:/usr/share/nginx/html --name exo5 nginx
+```
 
 ### 2. Ajouter le site dans le volume
 
@@ -28,15 +36,28 @@ Décompressez l'archive ZIP fournie sur votre machine.
 
 Copier les fichiers du site dans le conteneur Nginx, directement dans le répertoire associé au volume `static-site`.
 
+```bash
+docker cp C:\Users\Administrateur\Desktop\mon_projet_web\. exo5:/usr/share/nginx/html
+```
+
 Vérifiez que le site est accessible depuis votre navigateur.
 
 ### 3. Supprimer Nginx
 
 Arrêtez puis supprimez complètement le conteneur Nginx.
 
+```bash
+docker stop exo5
+docker rm exo5
+```
+
 Le volume `static-site` ne doit pas être supprimé.
 
 Vérifiez que le volume existe toujours après la suppression du conteneur.
+
+```bash
+docker volume ls
+```
 
 ---
 
@@ -54,6 +75,10 @@ static-site
 
 et montez-le dans le répertoire utilisé par Apache pour servir les fichiers web.
 
+```bash
+docker run -d -p 3005:80 -v static-site:/usr/local/apache2/htdocs --name exo5 httpd
+```
+
 ### 2. Vérifier le site
 
 Démarrez le conteneur et vérifiez que le site est accessible depuis votre navigateur.
@@ -69,6 +94,12 @@ Arrêtez puis supprimez complètement le conteneur Apache.
 Conservez une nouvelle fois le volume `static-site`.
 
 Vérifiez que le volume existe toujours.
+
+```bash
+docker stop exo5
+docker rm exo5
+docker volume ls
+```
 
 ---
 
@@ -86,10 +117,19 @@ static-site
 
 et configurez Caddy afin qu'il serve les fichiers présents dans ce volume.
 
+```bash
+docker run -d -p 3005:80 -v static-site:/usr/share/caddy --name exo5 caddy
+```
+
 ### 2. Vérifier le site
 
 Démarrez le conteneur Caddy et vérifiez que le même site est toujours accessible depuis votre navigateur.
 
 Aucune nouvelle copie du site ne doit être effectuée.
 
- 
+ ```bash
+docker stop exo5
+docker rm exo5
+docker volume ls
+docker volume rm static-site
+```
