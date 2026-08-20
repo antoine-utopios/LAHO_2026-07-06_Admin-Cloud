@@ -1,0 +1,28 @@
+services:
+  web:
+    container_name: mon-site-web
+    image: nginx:latest
+    ports:
+      - "5005:80"
+  web2:
+    image: httpd
+    ports:
+      - "5000:80"
+  web3:
+    image: exo6
+    ports:
+      - "5001:80"
+  web4:
+    container_name: site-qui-tourne
+    build: .
+    ports:
+      - "5002:80"
+
+  
+
+
+
+# docker run -p 5005:80 --name mon-site-web nginx:latest
+
+# pour lancer 
+# docker compose up -d

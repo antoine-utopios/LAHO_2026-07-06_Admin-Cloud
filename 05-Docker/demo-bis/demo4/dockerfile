@@ -1,0 +1,28 @@
+FROM nginx:alpine
+
+LABEL org.opencontainers.image.title="Demo Nginx ENV"
+LABEL org.opencontainers.image.description="Site statique démontrant les variables d'environnement Docker"
+LABEL org.opencontainers.image.authors="Formation Docker"
+LABEL org.opencontainers.image.version="1.0"
+
+ENV SITE_TITLE="Mon site Docker"
+ENV SITE_MESSAGE="Ces valeurs viennent des variables d'environnement."
+ENV SITE_ENVIRONMENT="DEVELOPPEMENT"
+
+WORKDIR /usr/share/nginx/html
+
+COPY html/ .
+
+COPY start.sh /start.sh
+
+RUN chmod +x /start.sh
+
+EXPOSE 80
+
+ENTRYPOINT ["/start.sh"]
+
+# docker build -t demo-site .
+
+# docker run --rm -p 8080:80 demo-site
+
+#docker run --rm -p 8081:80 -e SITE_TITLE="Site de production" -e SITE_MESSAGE="Configuration personnalisée au lancement" -e SITE_ENVIRONMENT="PRODUCTION" demo-site

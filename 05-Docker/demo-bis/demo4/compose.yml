@@ -1,0 +1,10 @@
+services:
+  site:
+    #image: demo-site
+    build: .
+    ports:
+      - "8082:80"
+    environment:
+      SITE_TITLE: "Site de production avec compose"
+      SITE_MESSAGE: "Configuration personnalisée au lancement avec compose"
+      SITE_ENVIRONMENT: "PRODUCTION avec compose"
