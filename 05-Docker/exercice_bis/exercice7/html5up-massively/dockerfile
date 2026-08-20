@@ -1,0 +1,15 @@
+FROM nginx
+
+WORKDIR /usr/share/nginx/html
+
+RUN rm -rf ./*
+
+COPY . .
+
+EXPOSE 80
+
+# nginx -g daemon off;
+CMD ["nginx","-g","daemon off;"]
+
+# docker build -t site-perso2
+

@@ -1,0 +1,10 @@
+dockerfile
+
+LICENSE.txt
+
+README.txt
+
+*.txt
+
+.env
+

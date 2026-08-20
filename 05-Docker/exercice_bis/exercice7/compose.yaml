@@ -1,0 +1,22 @@
+services:
+  web:
+    container_name: mon-site-web1
+    build: html5up-editorial
+    ports:
+      - "5000:80"
+  web1:
+    container_name: mon-site-web2
+    build: html5up-massively
+    ports:
+      - "5001:80"
+  web2:
+    container_name: mon-site-web3
+    build: html5up-paradigm-shift
+    ports:
+      - "5002:80"
+
+
+
+
+# pour lancer 
+# docker compose up -d

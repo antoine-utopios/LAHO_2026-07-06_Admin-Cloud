@@ -1,0 +1,13 @@
+FROM httpd
+
+WORKDIR /usr/local/apache2/htdocs
+
+RUN rm -rf ./*
+
+COPY . .
+
+EXPOSE 80
+
+
+# docker build -t site-perso1 .
+
