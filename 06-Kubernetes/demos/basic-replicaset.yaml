@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: demo-replicaset
+  labels:
+    app: demo-replicaset
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: demo-nginx
+  template:
+    metadata:
+      name: demo-nginx
+      labels:
+        app.kubernetes.io/name: demo-nginx
+    spec:
+      containers:
+        - name: demo-nginx
+          image: nginx
+          ports:
+            - containerPort: 80
