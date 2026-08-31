@@ -124,3 +124,29 @@ kubectl scale deployment nom-deployment --replicas=3
 ```bash
 kubectl port-forward service nom <port-hote>:<port-pod>
 ```
+
+* Teinter un noeud du cluster
+
+```bash
+kubectl taint nodes nom-node key=value:effect
+
+# Les effets peuvent être NoExecute, NoSchedule ou PreferNoSchedule
+```
+
+* Retirer une teinte d'un noeud du cluster
+
+```bash
+kubectl taint nodes nom-node key-
+```
+
+* Labelliser un noeud dans un cluster
+
+```bash
+kubectl label nodes nom-node key=value
+```
+
+* Retirer un label d'un noeud du cluster
+
+```bash
+kubectl label nodes nom-node key-
+```
