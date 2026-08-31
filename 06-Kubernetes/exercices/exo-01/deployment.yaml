@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-01-dep
+spec:
+  selector:
+    matchLabels:
+      app: exo-01-pod
+  template:
+    metadata:
+      labels:
+        app: exo-01-pod
+    spec:
+      containers:
+        - name: exo-01-container
+          image: quchaonet/2048
+          ports:
+            - containerPort: 8080

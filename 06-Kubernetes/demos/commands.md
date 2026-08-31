@@ -122,5 +122,5 @@ kubectl scale deployment nom-deployment --replicas=3
 * Réaliser un redirection des ports
 
 ```bash
-kubectl port-forward service nom --port <container-port>
+kubectl port-forward service nom <port-hote>:<port-pod>
 ```
