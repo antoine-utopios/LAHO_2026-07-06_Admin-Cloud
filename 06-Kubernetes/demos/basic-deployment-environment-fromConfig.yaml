@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+  labels:
+    app: demo-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: demo-nginx
+  template:
+    metadata:
+      name: demo-nginx
+      labels:
+        app.kubernetes.io/name: demo-nginx
+    spec:
+      containers:
+        - name: demo-nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: demo-configmap
+            - secretRef:
+                name: demo-secret
+          env:
+            - name: VARIABLE_NAME_QUAD
+              value: valeurDirecte
+            - name: VARIABLE_NAME_QUINT
+              valueFrom:
+                configMapKeyRef:
+                  key: VARIABLE_NAME
+                  name: demo-configmap-bis
+            - name: VARIABLE_NAME_SIX
+              valueFrom:
+                secretKeyRef:
+                  key: VARIABLE_NAME
+                  name: demo-secret

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+  labels:
+    app: demo-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: demo-nginx
+  template:
+    metadata:
+      name: demo-nginx
+      labels:
+        app.kubernetes.io/name: demo-nginx
+    spec:
+      containers:
+        - name: demo-nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          env:
+            - name: VARIABLE_NAME
+              value: value
+            - name: VARIABLE_NAME_BIS
+              value: valueBis
+            - name: VARIABLE_NAME_TER
+              value: valueTer

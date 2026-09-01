@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-configmap
+data:
+  VARIABLE_NAME: value
+  VARIABLE_NAME_BIS: valueBis
+  VARIABLE_NAME_TER: valueTer
