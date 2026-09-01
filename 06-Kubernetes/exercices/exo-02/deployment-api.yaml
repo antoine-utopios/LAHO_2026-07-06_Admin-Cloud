@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-02-api-dep
+spec:
+  selector:
+    matchLabels:
+      app: exo-02-api-pod
+  template:
+    metadata:
+      labels:
+        app: exo-02-api-pod
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: country
+                    operator: "In"
+                    values: ["japan"]
+      tolerations:
+        - effect: NoExecute
+          key: country
+          value: japan
+          operator: Equal
+      containers:
+        - name: exo-02-nginx-container
+          image: qqchose/api
+          ports:
+            - containerPort: 3000

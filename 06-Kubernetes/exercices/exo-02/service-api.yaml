@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: exo-02-api-svc
+spec:
+  selector:
+    app: exo-02-api-pod
+  ports:
+    - port: 3000
+      targetPort: 3000

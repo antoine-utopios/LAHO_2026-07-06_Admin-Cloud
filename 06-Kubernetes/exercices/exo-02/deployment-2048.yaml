@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-02-2048-dep
+spec:
+  selector:
+    matchLabels:
+      app: exo-02-2048-pod
+  template:
+    metadata:
+      labels:
+        app: exo-02-2048-pod
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: country
+                    operator: "In"
+                    values: ["usa"]
+      tolerations:
+        - effect: NoExecute
+          key: country
+          value: usa
+          operator: Equal
+      containers:
+        - name: exo-02-nginx-container
+          image: quchaonet/2048
+          ports:
+            - containerPort: 8080
