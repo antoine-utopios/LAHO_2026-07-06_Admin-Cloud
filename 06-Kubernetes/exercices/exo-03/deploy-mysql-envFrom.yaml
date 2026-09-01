@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-03-dep-bis
+spec:
+  selector:
+    matchLabels:
+      app: exo-03-pod-bis
+  template:
+    metadata:
+      labels:
+        app: exo-03-pod-bis
+    spec:
+      containers:
+        - name: exo-03-container-bis
+          image: mysql
+          ports:
+            - containerPort: 3306
+            - containerPort: 33060
+          envFrom:
+            - configMapRef:
+                name: exo-03-configmap
+            - secretRef:
+                name: exo-03-secret

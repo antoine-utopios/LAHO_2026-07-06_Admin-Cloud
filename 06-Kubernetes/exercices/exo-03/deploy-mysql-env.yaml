@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-03-dep
+spec:
+  selector:
+    matchLabels:
+      app: exo-03-pod
+  template:
+    metadata:
+      labels:
+        app: exo-03-pod
+    spec:
+      containers:
+        - name: exo-03-container
+          image: mysql
+          ports:
+            - containerPort: 3306
+            - containerPort: 33060
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: password
+            - name: MYSQL_PASSWORD
+              value: password
+            - name: MYSQL_USER
+              value: toto
+            - name: MYSQL_DATABASE
+              value: testDB
