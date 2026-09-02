@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: demo-statefulset
+spec:
+  selector:
+    matchLabels:
+      app: demo-pod
+  serviceName: demo-svc-headless
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: demo-pod
+    spec:
+      containers:
+        - name: demo-container
+          image: mysql
+          ports:
+            - containerPort: 3306
+              name: web
+          volumeMounts:
+            - name: demo-vol-data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: demo-vol-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

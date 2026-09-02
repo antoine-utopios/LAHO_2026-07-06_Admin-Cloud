@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: myjob
+spec:
+  schedule: "0 2 * * 0"
+  timeZone: "Europe/Paris"
+  startingDeadlineSeconds: 60 # S'il met une minute à se lancer et à s'effectuer, on le considère comme échoué
+  successfulJobHistoryLimit: 5 # On ne conserve que les 5 derniers historiques de réussite du job dans le cluster
+  failureJobHistoryLimit: 3 # On ne conserve que les 3 derniers historiques d'échec du job dans le cluster
+  suspend: false # On conserve les jobs, mêmes réussis
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: demo-pod
+        spec:
+          containers:
+            - name: demo-container
+              image: busybox
+              command: ["sh", "-c", "echo Je fais une tâche longue"]
+          restartPolicy: OnFailure

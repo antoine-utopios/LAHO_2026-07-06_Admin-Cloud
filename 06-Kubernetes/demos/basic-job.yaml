@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-job
+spec:
+  completions: 5 # On veut que le job réussisse 5 fois pour être considéré comme réussi
+  backOffLimits: 3 # On veut limiter à 3 échecs max avant de considérer le job comme échoué
+  parallelism: 3 # On va réaliser le job 3 pods / conteneurs à la fois
+  activeDeadlineSeconds: 25 # Au bout de 25s, le job est considéré comme échoué par défaut
+  ttlSecondsAfterFinished: 100 # Au bout de combien de temps on retire le job du cluster après sa terminaison
+  template:
+    metadata:
+      labels:
+        app: demo-pod
+    spec:
+      containers:
+        - name: demo-container
+          image: busybox
+          command: ["sh", "-c", "echo Je fais une tâche longue"]
+      restartPolicy: OnFailure # Never (on stoppera le conteneur pour de bon) | OnFailure (on relance le conteneur en cas de crash)

@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-networkpolicy
+spec:
+  podSelector: {}
+  # podSelector:
+  #   matchLabels:
+  #     app: demo-api-pod
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 123.4.12.7/32
+        - podSelector:
+            matchLabels:
+              app: demo-webserver-pod
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        # - podSelector:
+        #     matchLabels:
+        #       app: demo-database-pod
+        - namespaceSelector:
+            matchLabels:
+              env: demo-namespace
+      ports:
+        - protocol: TCP
+          port: 3306
