@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: exo-08-deployment
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      tier: backend
+  template:
+    metadata:
+      name: exo-08-pod
+      labels:
+        app: api
+        tier: backend
+    spec:
+      volumes:
+        - name: exo-08-data
+          emptyDir: {}
+      containers:
+        - name: exo-08-container
+          image: gharrowbm/kube-exo-08
+          volumeMounts:
+            - name: exo-08-data
+              mountPath: /app/logs/
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

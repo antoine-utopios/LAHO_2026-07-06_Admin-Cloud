@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-07-france-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exo-07-france-nginx
+      tier: frontend
+  template:
+    metadata:
+      name: exo-07-france-nginx-pod
+      labels:
+        app: exo-07-france-nginx
+        tier: frontend
+    spec:
+      tolerations:
+        - key: "country"
+          operator: "Equal"
+          value: "france"
+          effect: "NoExecute"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "country"
+                    operator: "In"
+                    values: ["france"]
+      containers:
+        - name: exo-07-france-nginx-container
+          image: nginx:alpine
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

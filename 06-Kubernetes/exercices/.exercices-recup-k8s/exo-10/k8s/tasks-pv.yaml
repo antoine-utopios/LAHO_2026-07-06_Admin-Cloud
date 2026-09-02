@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: exo-10-pv
+  namespace: exo-10-namespace
+spec:
+  capacity:
+    storage: "1Gi"
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/data
+    type: DirectoryOrCreate

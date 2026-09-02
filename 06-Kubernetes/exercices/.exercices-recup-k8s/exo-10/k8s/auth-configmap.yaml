@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-configmap
+  namespace: exo-10-namespace
+data:
+  AUTH_ADDRESS: "auth-service.exo-10-namespace"

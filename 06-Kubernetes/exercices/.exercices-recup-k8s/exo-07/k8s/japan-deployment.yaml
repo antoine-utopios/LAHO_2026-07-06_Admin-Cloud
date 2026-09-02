@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-07-japan-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exo-07-japan-api
+      tier: backend
+  template:
+    metadata:
+      name: exo-07-japan-api-pod
+      labels:
+        app: exo-07-japan-api
+        tier: backend
+    spec:
+      tolerations:
+        - key: "country"
+          operator: "Equal"
+          value: "japan"
+          effect: "NoExecute"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "country"
+                    operator: "In"
+                    values: ["japan"]
+      containers:
+        - name: exo-07-japan-api-container
+          image: registry-name/kube-exo-07-api:latest
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

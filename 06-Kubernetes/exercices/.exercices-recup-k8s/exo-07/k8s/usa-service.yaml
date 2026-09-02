@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: exo-07-usa-2048-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: exo-07-usa-2048
+    tier: frontend
+  ports:
+    - port: 8080
+      targetPort: 8080
