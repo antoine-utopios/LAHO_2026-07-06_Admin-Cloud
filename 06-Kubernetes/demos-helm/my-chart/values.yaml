@@ -1,0 +1,28 @@
+deployment:
+  name: demo-deployment
+appName: demo-app
+replicaCount: 3
+customLabel: demo-nginx
+nginxVersion: 1.31.4
+needsEnvironment: true
+withService: true
+
+# listingClassic:
+#   - 1
+#   - 2
+#   - 3
+
+listingClassic: [1, 2, 3]
+
+baseConfig:
+  - key: VARIABLE_Name
+    value: toto
+  - key: VARIabLE_NAME_BIS
+    value: bidule
+  - key: VARIABle_NAME_TER
+    value: machin
+
+testMetadata:
+  name: value
+  labels:
+    app: name

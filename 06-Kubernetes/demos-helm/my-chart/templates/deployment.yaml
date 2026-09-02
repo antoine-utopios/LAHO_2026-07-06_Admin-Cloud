@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # name: chartName-releaseName
+  name: {{ .Chart.Name }}-{{ .Release.Name }}-dep
+  namespace: {{ .Chart.Name }}-{{ .Release.Name }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: {{ .Values.replicaCount}}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.customLabel }}
+  template:
+    metadata:
+      name: {{ .Values.customLabel }}
+      labels:
+        app.kubernetes.io/name: {{ .Values.customLabel }}
+    spec:
+      containers:
+        - name: {{ .Values.customLabel }}
+          image: {{ printf "nginx: %s" .Values.nginxVersion | quote }}
+          ports:
+            - containerPort: 80
+          {{- /* Commentaire pour le templating */}}
+          {{- if .Values.needsEnvironment }}
+          env:
+            - name: VARIABLE_NAME
+              value: value
+          {{- end }}

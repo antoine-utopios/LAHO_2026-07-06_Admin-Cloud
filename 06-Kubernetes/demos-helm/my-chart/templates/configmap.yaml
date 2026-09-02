@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-{{ .Release.Name }}-configmap
+data:
+{{- range .Values.baseConfig }}
+  {{ .key | upper }}: {{ .value | upper }}
+  {{ printf "%s: %s" .key .value | upper }}
+{{- end }}
+
+  otherKey: {{ toYaml .Values.testMetadata | nindent 4 }}

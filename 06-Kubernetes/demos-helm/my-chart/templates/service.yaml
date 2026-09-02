@@ -1,0 +1,13 @@
+{{- if .Values.withService }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-{{ .Release.Name }}-svc
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: {{ .Values.customLabel }}
+  ports:
+    - port: 80
+      targetPort: 80
+{{- end }}

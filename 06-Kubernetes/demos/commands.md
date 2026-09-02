@@ -150,3 +150,39 @@ kubectl label nodes nom-node key=value
 ```bash
 kubectl label nodes nom-node key-
 ```
+
+## Commandes Helm
+
+* Créer un déploiement via Helm 
+
+```bash
+helm install nom-release nom-chart 
+
+helm install nom-release nom-chart --set variableName=value
+
+helm install nom-release nom-chart -f fichier-variables.yaml
+```
+
+* Retirer un déploiement via Helm 
+
+```bash
+helm uninstall nom-release
+```
+
+* Mettre à jour un déploiement via Helm 
+
+```bash
+helm upgrade nom-release --set nouvelleVariable=nouvelleValeur
+```
+
+* Ajouter un lien vers un registre de chart distant
+
+```bash
+helm repo add nom-registre url-registre
+```
+
+* Voir les valeurs YAML du registre de chart distant
+
+```bash
+helm show values nom-registre
+```
