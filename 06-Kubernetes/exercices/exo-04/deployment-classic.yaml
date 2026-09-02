@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-04-dep
+spec:
+  selector:
+    matchLabels:
+      app: exo-04-pod
+  template:
+    metadata:
+      labels:
+        app: exo-04-pod
+    spec:
+      containers:
+        - name: exo-04-container
+          image: docker.io/username/image-name
+          ports:
+            - containerPort: 5000

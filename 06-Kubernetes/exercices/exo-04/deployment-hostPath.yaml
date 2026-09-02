@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exo-04-dep
+spec:
+  selector:
+    matchLabels:
+      app: exo-04-pod
+  template:
+    metadata:
+      labels:
+        app: exo-04-pod
+    spec:
+      volumes:
+        - name: exo-04-data
+          hostPath:
+            path: /tmp/data/events.log
+            type: FileOrCreate
+      containers:
+        - name: exo-04-container
+          image: docker.io/username/image-name
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: exo-04-data
+              mountPath: /app/logs/events.log
+          affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: country
+                      operator: "In"
+                      values: ["france"]
+          tolerations:
+            - effect: NoExecute
+              key: country
+              value: france
+              operator: Equal
