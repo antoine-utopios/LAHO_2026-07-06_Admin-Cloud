@@ -1,0 +1,34 @@
+stages:
+  - compil
+  - caca
+  - boudin
+  - verif
+
+job-compil:
+  stage: compil
+  script:
+    - mkdir -p build
+    - echo "<h1>Hello World</h1>" > build/website.html
+  artifacts:
+    paths:
+      - build/website.html
+
+job-caca:
+  dependencies: []
+  stage: caca
+  script:
+    - echo "Hello world"
+
+job-boudin:
+  dependencies: []
+  stage: boudin
+  script:
+    - echo "Hello world"
+
+job-verif:
+  # dependencies:
+  #   - job-compil
+  dependencies: ["job-compil"]
+  stage: verif
+  script:
+    - cat build/website.html | grep -i "hello world"
