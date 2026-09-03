@@ -1,0 +1,40 @@
+# Pipeline => Stages => Jobs => Script avec les tâches
+
+## Stages fournis par défaut par GitLab_CI
+
+# - .pre
+# - build
+# - test
+# - deploy
+# - .post
+
+stages:
+  - faire_repas
+  - dresser_repas
+  - savourer_repas
+
+cuire_pates:
+  stage: faire_repas
+  script:
+    - echo "Faire chauffer eau"
+    - echo "Mettre les pâtes dans la flotte"
+    - echo "Attendre fin cuisson"
+    - echo "Egoutter les pâtes"
+
+cuire_legumes:
+  stage: faire_repas
+  script:
+    - echo "Sortir les légumes du frigo"
+    - echo "Découper les légumes"
+    - echo "Faire rissoler les légumes"
+
+dresser_assiettes:
+  stage: dresser_repas
+  script:
+    - echo "Mettre les pâtes dans l'assiette"
+    - echo "Recouvrir les pâtes des légumes"
+
+manger:
+  stage: savourer_repas
+  script:
+    - echo "Miam les bonnes pâtes !"
