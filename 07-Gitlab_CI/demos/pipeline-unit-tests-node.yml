@@ -1,0 +1,31 @@
+stages:
+  - build
+  - test
+
+compil-app:
+  stage: build
+  image: node:alpine
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+
+verif-compil:
+  dependencies: ["compil-app"]
+  image: alpine
+  stage: test
+  script:
+    - cat build/index.html | grep -i '<div id="root"></div>'
+
+test-app:
+  dependencies: []
+  image: node:alpine
+  stage: test
+  script:
+    - npm ci
+    - npm run test
+  artifacts:
+    paths:
+      - reports/html/
