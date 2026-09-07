@@ -1,0 +1,9 @@
+scan_vulnerabilities:
+  image:
+    name: aquasec/trivy
+    entrypoint: [""]
+  script:
+    - trivy fs --severity HIGH,CRITICAL -f json -o dependencies_vulnerabilities.json .
+  artifacts:
+    paths:
+      - dependencies_vulnerabilities.json

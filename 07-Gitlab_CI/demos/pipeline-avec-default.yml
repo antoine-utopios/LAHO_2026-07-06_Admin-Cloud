@@ -1,0 +1,20 @@
+default:
+  stage: build
+  image: alpine
+  tags:
+    - docker
+    - local
+
+premier-job:
+  script:
+    - echo "Premier job..."
+
+second-job:
+  script:
+    - echo "Second job..."
+
+autre-job-different:
+  stage: test
+  image: node:alpine
+  script:
+    - node -v
