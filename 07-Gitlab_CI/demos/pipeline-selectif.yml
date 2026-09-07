@@ -1,0 +1,27 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+default:
+  image: alpine
+  tags:
+    - docker
+    - local
+
+job-toutes-branches:
+  script:
+    - echo "Je suis lancé pour tous les pipelines..."
+
+job-autre_branche:
+  script:
+    - echo "J'ai lieu ailleurs que sur la branche principale"
+  rules:
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+
+job-uniquement_branche_principale:
+  script:
+    - echo "J'ai lieu uniquement sur la branche principale"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
