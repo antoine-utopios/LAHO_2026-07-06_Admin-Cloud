@@ -1,0 +1,17 @@
+services:
+  gitlab-runner-01:
+    image: 'gitlab/gitlab-runner:latest'
+    container_name: gitlab-runner-01
+    restart: always
+    volumes:
+      - //var/run/docker.sock:/var/run/docker.sock
+      - runner_config_01:/etc/gitlab-runner
+    healthcheck:
+      test: ["CMD", "gitlab-runner", "verify"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  runner_config_01:
