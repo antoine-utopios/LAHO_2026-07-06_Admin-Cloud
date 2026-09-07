@@ -1,0 +1,25 @@
+stages:
+  - build
+  - test
+
+compil-app:
+  tags:
+    - gitlab-org-docker
+  stage: build
+  image: maven:3.9.8-eclipse-temurin-21
+  script:
+    - mvn -B -Dmaven.repo.local=.m2/repository -Dmaven.test.failure.ignore=false clean install -DskipTests
+
+test-app:
+  tags:
+    - gitlab-org-docker
+  stage: test
+  image: maven:3.9.8-eclipse-temurin-21
+  script:
+    - mvn -B -Dmaven.repo.local=.m2/repository -Dmaven.test.failure.ignore=false verify
+  artifacts:
+    paths:
+      - target/site/jacoco/
+      - target/surefire-reports/
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
