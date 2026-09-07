@@ -29,3 +29,5 @@ test-app:
   artifacts:
     paths:
       - reports/html/
+    reports:
+      junit: reports/junit.xml
