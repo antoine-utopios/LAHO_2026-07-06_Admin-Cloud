@@ -1,0 +1,192 @@
+# Ajout d'un workflow pour éviter la duplication des pipelines réalisée par Gitlab CI automatiquement en cas d'exclusion de job d'un pipeline
+workflow:
+    rules:
+        - if: '$CI_PIPELINE_SOURCE == "merge_request_event"' 
+        - if: '$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH' 
+
+
+# Permet de définir l'ordre d'exécution des jobs dans le pipeline
+stages:
+    - build_site
+    - test
+    - deploy_netlify_review
+    - deploy_netlify_review_e2e_tests
+    - deploy_netlify_staging
+    - deploy_netlify_production
+    - build_docker_image
+    - deploy_digital_ocean
+
+# Permet de conserver certains dossier / fichiers de sorte à accélérer les pipelines successives
+cache: 
+    paths: 
+        - node_modules/
+
+# Permet de définir une configuration par défaut pour l'ensemble des jobs
+default:
+    tags:
+        - local
+        - docker 
+        - ruby
+
+# Un job précédé d'un '.' ne sera pas exécuté par le pipeline, mais peut être utilisé dans le but de servir de 'base' à d'autres jobs
+.base_node:
+    image: node:24-alpine
+    before_script:
+        - npm ci
+
+# Job permettant le build du site via vite
+.build_app:
+    stage: build_site
+    extends: .base_node
+    script:
+        - npm run build
+    # ON extériorise le résultat du build de sorte à pouvoir le visionner dans l'interface Gitlab CI / s'en servir dans d'autres jobs
+    artifacts:
+        paths:
+            - "build/"
+        expire_in: 1 week
+
+# Job servant à vérifier que le build du site s'est bien réalisé
+.test_build:
+    stage: test
+    dependencies:
+        - build_app
+    script:
+        - test -f build/index.html
+
+# Job pour réaliser les tests unitaires via vitest
+unit_tests:
+    stage: test
+    dependencies: []
+    extends: .base_node
+    script: 
+        - npm run test
+    artifacts:
+        when: always
+        reports:
+            junit: 'reports/junit.xml'
+        paths:
+            - "reports/"
+        expire_in: 1 week
+
+# Permet de publier sur une version 'temp' de review notre site via Netlify, ce dans le but de pouvoir faire les tests e2e par la suite
+.deploy_netlify_review: 
+    image: node:24-alpine
+    dependencies:
+        - build_app
+    rules:
+        - if: '$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH' 
+    environment:
+        name: review/$CI_COMMIT_SHORT_SHA
+        url: $ENVIRONMENT_URL
+    stage: deploy_netlify_review
+    before_script:
+        - npm install -g netlify-cli
+        - apk add curl jq 
+    script: 
+        - netlify deploy --dir build/ --auth $NETLIFY_AUTH_TOKEN --no-build --json | tee deploy.json
+        - ENVIRONMENT_URL=$(jq -r '.deploy_url' deploy.json)
+        - curl $ENVIRONMENT_URL | grep 'GitLab'
+        - echo "ENVIRONMENT_URL=$ENVIRONMENT_URL" | tee deploy.env
+    artifacts:
+        reports:
+            dotenv: deploy.env
+
+# Job permettant que le déploiement en review soit testé par playwright de sorte à valider une série de tests e2e
+.deploy_netlify_review_e2e_tests:
+    image: mcr.microsoft.com/playwright:v1.49.1-noble     
+    dependencies: 
+        - deploy_netlify_review
+    rules:
+        - if: '$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH' 
+    stage: deploy_netlify_review_e2e_tests
+    variables: 
+        APP_BASE_URL: $ENVIRONMENT_URL
+    before_script: 
+        - npm ci
+    script: 
+        - echo $ENVIRONMENT_URL
+        - npm run e2e
+    artifacts:
+        when: always
+        expire_in : 1 week
+        reports:
+            junit: reports/playwright-junit.xml
+
+# Job pour déployer l'application en staging, exécuté après la validation du merge request
+.deploy_netlify_staging: 
+    image: node:24-alpine
+    dependencies:
+        - build_app
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH' 
+    environment:
+        name: staging
+        url: $ENVIRONMENT_URL
+    stage: deploy_netlify_staging
+    before_script:
+        - npm install -g netlify-cli
+        - apk add curl jq 
+    script: 
+        - netlify deploy --dir build/ --alias staging --auth $NETLIFY_AUTH_TOKEN --no-build --json | tee deploy.json
+        - ENVIRONMENT_URL=$(jq -r '.deploy_url' deploy.json)
+        - curl $ENVIRONMENT_URL | grep 'GitLab'
+        - echo "ENVIRONMENT_URL=$ENVIRONMENT_URL" | tee deploy.env
+    artifacts:
+        reports:
+            dotenv: deploy.env
+
+# Job pour déployer l'application en staging, exécuté manuellement
+.deploy_netlify_production: 
+    image: node:24-alpine
+    dependencies:
+        - build_app
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH' 
+    when: manual
+    environment:
+        name: production/netlify
+        url: $ENVIRONMENT_URL
+    stage: deploy_netlify_production
+    before_script:
+        - npm install -g netlify-cli
+        - apk add curl jq 
+    script: 
+        - netlify deploy --dir build/ --prod --auth $NETLIFY_AUTH_TOKEN --no-build --json | tee deploy.json
+        - ENVIRONMENT_URL=$(jq -r '.deploy_url' deploy.json)
+        - curl $ENVIRONMENT_URL | grep 'GitLab'
+        - echo "ENVIRONMENT_URL=$ENVIRONMENT_URL" | tee deploy.env
+    artifacts:
+        reports:
+            dotenv: deploy.env
+
+build_docker_image:
+    image: docker:28
+    services:
+        - docker:28-dind
+    dependencies: []
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH' 
+    stage: build_docker_image
+    script: 
+        - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+        - docker build -t $CI_REGISTRY_IMAGE/vite-app:$CI_COMMIT_SHORT_SHA .
+        - docker push $CI_REGISTRY_IMAGE/vite-app:$CI_COMMIT_SHORT_SHA
+
+deploy_digital_ocean:
+    image: alpine
+    dependencies: []
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH' 
+    stage: deploy_digital_ocean
+    before_script:
+        - apk add openssh-client
+        - echo $SSH_KEY_BASE64 | base64 -d > id_rsa
+        - chmod 600 id_rsa
+    script: |
+        ssh -i id_rsa -o StrictHostKeyChecking=no root@$DROPLET_IP << EOF 
+            echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+            docker stop vite-app || true
+            docker rm vite-app || true
+            docker run -d -p 80:80 --name vite_app $CI_REGISTRY_IMAGE/vite-app:$CI_COMMIT_SHORT_SHA
+        EOF

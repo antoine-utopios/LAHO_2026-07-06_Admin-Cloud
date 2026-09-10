@@ -1,0 +1,86 @@
+# workflow:
+#   rules:
+#     - if: "$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH"
+#     - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+#     - if: "$CI_COMMIT_TAG"
+
+.maven-cache:
+  cache:
+    key: "${CI_COMMIT_SHORT_SHA}-maven-dependencies"
+    paths:
+      - .m2/repository/
+      - target/
+
+variables:
+  MVN_CLI_ARGS: "-B -Dmaven.repo.local=.m2/repository -Dmaven.test.failure.ignore=false"
+  DOCKER_IMAGE_NAME: "$CI_REGISTRY_IMAGE/maven-app"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
+  GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task
+
+stages:
+  - build
+  - test
+  - verify-dep
+  - verify-quality
+  - packaging
+
+build:
+  stage: build
+  image: maven:3.9.8-eclipse-temurin-21
+  script:
+    - mvn $MVN_CLI_ARGS clean install -DskipTests
+  # rules:
+  #   - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
+
+test:
+  stage: test
+  image: maven:3.9.8-eclipse-temurin-21
+  script:
+    - mvn $MVN_CLI_ARGS verify
+  artifacts:
+    paths:
+      - target/site/jacoco/
+      - target/surefire-reports/
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+  # rules:
+  #   - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
+
+verify-dep:
+  stage: verify-dep
+  image:
+    name: aquasec/trivy
+    entrypoint: [""]
+  script:
+    - trivy fs . --exit-code 0 --severity HIGH,CRITICAL -f json -o trivy-dependencies-report.json
+  artifacts:
+    reports:
+      dependency_scanning: trivy-dependencies-report.json
+  # rules:
+  #   - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
+
+sonarcloud-check:
+  stage: verify-quality
+  image: maven:3.9.8-eclipse-temurin-21
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - mvn $MVN_CLI_ARGS verify sonar:sonar -Dsonar.projectKey=cda_li5_20260216_formateur_demo_project-sonar_trivy
+  # rules:
+  #   - if: "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH"
+
+packaging:
+  stage: packaging
+  image: docker:29
+  services:
+    - docker:29-dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $DOCKER_IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker build -t $DOCKER_IMAGE_NAME:latest .
+    - docker push -a $DOCKER_IMAGE_NAME
+  # rules:
+  #   - if: "$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH"

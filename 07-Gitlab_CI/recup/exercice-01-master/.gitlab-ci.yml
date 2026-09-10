@@ -1,0 +1,45 @@
+default:
+  image: node:25-alpine
+  tags:
+    - docker
+    - local
+
+build-app:
+  stage: build
+  cache:
+    key: "node-dependencies-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - node_modules/
+  script: 
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+
+test-build-app:
+  stage: test
+  image: alpine:3.23
+  needs:
+    - job: "build-app"
+      artifacts: true
+  script: 
+    - ls build/index.html
+    - cat build/index.html | grep '<title>Learn GitLab CI/CD</title>'
+
+unit-tests:
+  stage: test
+  needs: ["build-app"]
+  cache:
+    key: "node-dependencies-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - node_modules/
+  script:
+    - npm ci
+    - npm run test
+  artifacts:
+    paths:
+      - reports/html/
+    reports:
+      junit: reports/junit.xml
+    expire_in: 1 week
