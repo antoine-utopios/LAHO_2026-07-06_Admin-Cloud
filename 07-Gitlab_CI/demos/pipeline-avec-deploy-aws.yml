@@ -1,0 +1,31 @@
+variables:
+  DOCKER_CONTAINER_NAME: deployment-website
+
+stages:
+  - packaging
+  - deploy
+
+packaging-app:
+  stage: packaging
+  image: docker:29
+  services:
+    - docker:29-dind
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA  .
+    - docker push -a $CI_REGISTRY_IMAGE
+
+deploy-app:
+  stage: deploy
+  image: alpine:3.24.2
+  before_script:
+    - apk update
+    - apk add openssh-client
+    - mkdir -p ~/.ssh/
+    - echo $PRIVATE_KEY_B64 | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo $KNOWN_HOSTS_B64 | base64 -d > ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - ssh -i ~/.ssh/id_rsa ${EC2_USER}@${EC2_PUBLIC_IP} "echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin && docker pull $CI_REGISTRY_IMAGE:latest && docker stop $DOCKER_CONTAINER_NAME || true && docker rm $DOCKER_CONTAINER_NAME || true && docker run -d --name $DOCKER_CONTAINER_NAME --restart always -p 80:80 $CI_REGISTRY_IMAGE:latest"
