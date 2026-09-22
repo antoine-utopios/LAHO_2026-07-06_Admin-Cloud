@@ -1,5 +1,5 @@
 variables:
-  DOCKER_CONTAINER_NAME: deploy-app
+  DOCKER_CONTAINER_NAME: oubli-nom-pas-bien
 
 stages:
   - build
@@ -37,7 +37,7 @@ check-vulnerabilities:
     entrypoint: [""]
   stage: test
   script:
-    - trivy fs --severity HIGH,CRITICAL -f json -o dependencies-vulnerabilities.json
+    - trivy fs --severity HIGH,CRITICAL -f json -o dependencies-vulnerabilities.json .
   artifacts:
     paths:
       - dependencies-vulnerabilities.json
@@ -60,7 +60,7 @@ packaging-app:
 # - PRIVATE_KEY_B64: La clé privée .pem permettant de se connecter à la machine virtuelle EC2 (masked / hidden)
 # - KNOWN_HOSTS_B64: Le contenu du fichier known_host permettant d'éviter la question de confirmation lors de la connexion du runner à l'instance (généré par la commande ssh-keyscan -H -t ssh-ed25519 $EC2_PUBLIC_IP)
 
-deploy-app:
+.deploy-app:
   stage: deploy
   image: alpine:3.24.2
   before_script:
