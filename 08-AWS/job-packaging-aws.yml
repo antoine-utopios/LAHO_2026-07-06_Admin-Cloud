@@ -1,0 +1,25 @@
+## Variables à utiliser dans Gitlab CI pour utiliser un runner amawon/cli
+# - AWS_DEFAULT_REGION: La région dans laquelle on veut effectuer les actions de l'invité de commande
+# - AWS_ACCESS_KEY_ID: L'utilisateur servant à s'authentifier
+# - AWS_SECRET_ACCESS_KEY: Le mot de passe servant à s'authentifier
+# - AWS_ECR_IMAGE_NAME: Le nom du registre d'image de conteneur créé sur AWS en amont 
+
+packaging-aws:
+  stage: packaging
+  image: 
+    name: amazon/aws-cli
+    entrypoint: [""]
+  services:
+    - docker:29-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    AWS_ECR_IMAGE_NAME: "m2i-test-formateur"
+  before_script:
+    - yum install -y docker
+    - export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    - export AWS_REGISTRY=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+    - aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_REGISTRY}
+  script:
+    - docker build -t ${AWS_REGISTRY}/${AWS_ECR_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} .
+    - docker push ${AWS_REGISTRY}/${AWS_ECR_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
