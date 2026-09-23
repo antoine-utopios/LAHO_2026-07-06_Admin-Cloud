@@ -1,0 +1,58 @@
+variables:
+  ARCHIVE_NAME: backup.tar
+
+stages:
+  - build
+  - test
+  - upload
+
+build-app:
+  stage: build
+  image: node:26.9-alpine3.24
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+
+unit-testing:
+  dependencies: []
+  image: node:26.9-alpine3.24
+  stage: test
+  script:
+    - npm ci
+    - npm run test
+  artifacts:
+    paths:
+      - reports/html/
+    reports:
+      junit: reports/junit.xml
+
+check-vulnerabilities:
+  dependencies: []
+  image: 
+    name: aquasec/trivy:0.74.0
+    entrypoint: [""]
+  stage: test
+  script:
+    - trivy fs --severity HIGH,CRITICAL -f json -o dependencies-vulnerabilities.json .
+  artifacts:
+    paths:
+      - dependencies-vulnerabilities.json
+
+upload-sur-s3:
+  stage: upload
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
+  dependencies: ["unit-testing", "check-vulnerabilities"]
+  before_script:
+    - yum install -y tar gzip
+  script:
+    - mkdir -p backup
+    - cp -r dependencies-vulnerabilities.json backup/
+    - cp -r reports/html/ backup/
+    - tar -czvf ${ARCHIVE_NAME} backup/
+    - aws s3 cp ${ARCHIVE_NAME} s3://${AWS_S3_NAME}/${CI_PROJECT_NAME}/${CI_COMMIT_SHORT_SHA}/${ARCHIVE_NAME}
+    - aws s3 ls ${ARCHIVE_NAME} s3://${AWS_S3_NAME}/${CI_PROJECT_NAME}/${CI_COMMIT_SHORT_SHA}/ | grep -i ${ARCHIVE_NAME}

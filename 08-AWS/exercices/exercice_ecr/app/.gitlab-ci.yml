@@ -6,11 +6,17 @@ packaging-aws:
   image: 
     name: amazon/aws-cli
     entrypoint: [""]
+# A retirer pour que ça fonctionne sur les PC M2i - Config Nathaniel
   services:
+# A retirer pour que ça fonctionne sur les PC M2i - Config Nathaniel
     - docker:29-dind
+# A retirer pour que ça fonctionne sur les PC M2i - Config Nathaniel
   variables:
+# A retirer pour que ça fonctionne sur les PC M2i - Config Nathaniel
     DOCKER_HOST: tcp://docker:2375
+# A retirer pour que ça fonctionne sur les PC M2i - Config Nathaniel
     DOCKER_TLS_CERTDIR: ""
+    AWS_ECR_IMAGE_NAME: "m2i-test-formateur"
   before_script:
     - yum install -y docker
     - export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
