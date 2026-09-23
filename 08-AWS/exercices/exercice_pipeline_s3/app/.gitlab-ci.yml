@@ -1,5 +1,5 @@
 variables:
-  ARCHIVE_NAME: backup.tar
+  ARCHIVE_NAME: $(date +"%Y_%m_%d")_backup.tar
 
 stages:
   - build
