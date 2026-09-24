@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nom_replicaset
+  labels:
+    type: replicaset
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      key_a: value_a
+  template:
+    metadata:
+      name: nom_pod
+      labels:
+        key_a: value_a
+    spec:
+      containers:
+      - name: nom_conteneur
+        image: docker.io/library/nginx:alpine
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+          limits:
+            memory: "1024Mi"
+            cpu: "1.5"
+        ports:
+          - containerPort: 80
+
