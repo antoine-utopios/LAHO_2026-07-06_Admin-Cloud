@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ma-claim-perso
+spec:
+  resources:
+    requests:
+      storage: "512Mi"
+  volumeMode: Filesystem
+  accessModes:
+    - ReadOnlyMany

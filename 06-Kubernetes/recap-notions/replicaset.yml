@@ -2,23 +2,29 @@ apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
   name: nom_replicaset
-  labels:
+  labels: # Les labels du ReplicaSet
     type: replicaset
     tier: frontend
 spec:
   replicas: 3
   selector:
-    matchLabels:
-      key_a: value_a
+    matchLabels: # Il faut relier le replicaset au pods, pour cela on va cibler via les labels
+      key_a: value_a # On remet le même ensemble de clés / valeurs que dans le(s) pod(s)
   template:
+    # --------- DEBUT TEMPLATE ---------
     metadata:
-      name: nom_pod
-      labels:
+      name: nom_pod # Nom du pod (qui sera complété automatiquement par un ID unique si multiple)
+      labels: # Ce qui concerne le(s) pod(s) 
         key_a: value_a
     spec:
       containers:
-      - name: nom_conteneur
+      - name: nom_conteneur # Au niveau du conteneur
         image: docker.io/library/nginx:alpine
+        env:
+        - name: ENV_VAR_A
+          value: "2_000"
+        - name: ENV_VAR_B
+          value: "3_000"
         resources:
           requests:
             memory: "256Mi"
@@ -28,4 +34,5 @@ spec:
             cpu: "1.5"
         ports:
           - containerPort: 80
+    # --------- FIN TEMPLATE ---------
 

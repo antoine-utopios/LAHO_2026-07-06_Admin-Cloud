@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mes-donnees-mysql
+spec:
+  capacity:
+    storage: "2048Gi"
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce # Pour la BdD qui va faire les Ecriture / Lecture (BdD Admin)
+    - ReadOnlyMany # Pour les BdD qui vont faire uniquement les lectures (Replicats)
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow

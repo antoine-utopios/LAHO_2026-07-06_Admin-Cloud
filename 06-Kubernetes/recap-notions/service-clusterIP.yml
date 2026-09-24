@@ -4,8 +4,8 @@ metadata:
   name: nom_service
 spec:
   # type: ClusterIP
-  selector:
-    key_a: value_a
+  selector: # On va devoir sélectionner la ressource qui sera desservie par le service
+    key_a: value_a # On répète les ensembles clés / valeurs des labels présent dans le template de(s) pod(s)
   ports:
   - port: 80
     targetPort: 80

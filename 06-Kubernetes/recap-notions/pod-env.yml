@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nom_pod
+  labels:
+    key_a: value_a
+spec:
+  containers:
+  - name: nom_conteneur
+    image: docker.io/library/nginx:alpine
+    env:
+      - name: ENV_VAR_A
+        value: "2_000"
+      - name: ENV_VAR_B
+        valueFrom:
+          configMapKeyRef:
+            key: ENV_VAR_A
+            name: ma-configmap
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "500m"
+      limits:
+        memory: "1024Mi"
+        cpu: "1.5"
+    ports:
+      - containerPort: 80

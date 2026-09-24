@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: myjob
+spec:
+  completions: 5 # On veut que le job réussisse 5 fois pour être considéré comme réussi
+  backOffLimits: 3 # On veut limiter à 3 échecs max avant de considérer le job comme échoué
+  parallelism: 3 # On va réaliser le job 3 pods / conteneurs à la fois
+  activeDeadlineSeconds: 25 # Au bout de 25s, le job est considéré comme échoué par défaut
+  ttlSecondsAfterFinished: 100 # Au bout de combien de temps on retire le job du cluster après sa terminaison
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: docker.io/user/recup-acteurs-france
+      restartPolicy: Never
