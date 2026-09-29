@@ -1,0 +1,27 @@
+# HorizontalPodAutoscaler (J6) : ajuste le nombre de replicas de l'API
+# selon la CPU consommée RAPPORTÉE AUX REQUESTS (100m demandés => 60 % = 60m).
+# Prérequis : minikube addons enable metrics-server
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60   # défaut 300 s — raccourci pour la démo

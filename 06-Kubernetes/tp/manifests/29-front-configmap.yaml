@@ -1,0 +1,79 @@
+# ConfigMap "fichier monté" : la page statique du front.
+# Au J3 (compose), index.html était un bind mount ; en Kubernetes, le même
+# besoin se traite par un ConfigMap monté en volume dans le pod nginx.
+# Le proxy /api de nginx.conf disparaît : c'est l'INGRESS qui route /api.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: front-html
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+    app: front
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>StockLine — Inventaire (Kubernetes)</title>
+      <style>
+        body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 720px; color: #222; }
+        h1 { color: #1a4fa0; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem 0.75rem; text-align: left; }
+        th { background: #1a4fa0; color: #fff; }
+        tr:nth-child(even) { background: #f4f6fa; }
+        #erreur { color: #b00020; font-weight: bold; }
+        .muted { color: #666; font-size: 0.9rem; }
+      </style>
+    </head>
+    <body>
+      <h1>StockLine — Produits</h1>
+      <p class="muted">Version Kubernetes : cette page est servie par nginx dans un pod ;
+        les appels <code>fetch</code> partent vers <code>/api/…</code> sur la même origine,
+        et c'est l'ingress qui route <code>/api</code> vers le Service de l'API.</p>
+      <p id="erreur"></p>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Référence</th><th>Nom</th><th>Prix unitaire (€)</th><th>Seuil d'alerte</th></tr>
+        </thead>
+        <tbody id="produits"></tbody>
+      </table>
+
+      <script>
+        // Chemin relatif : aucune URL en dur, le routage est l'affaire de l'ingress.
+        const API_URL = "/api";
+
+        async function chargerProduits() {
+          try {
+            const reponse = await fetch(`${API_URL}/produits`);
+            if (!reponse.ok) {
+              throw new Error(`L'API a répondu ${reponse.status}`);
+            }
+            const produits = await reponse.json();
+            const corps = document.getElementById("produits");
+            corps.innerHTML = "";
+            if (produits.length === 0) {
+              document.getElementById("erreur").textContent =
+                "Aucun produit pour l'instant : créez-en un avec POST /api/produits.";
+              return;
+            }
+            for (const p of produits) {
+              const ligne = document.createElement("tr");
+              ligne.innerHTML =
+                `<td>${p.id}</td><td>${p.reference}</td><td>${p.nom}</td>` +
+                `<td>${p.prix_unitaire.toFixed(2)}</td><td>${p.seuil_alerte}</td>`;
+              corps.appendChild(ligne);
+            }
+          } catch (err) {
+            document.getElementById("erreur").textContent =
+              `Impossible de joindre l'API (${err.message}). La pile est-elle démarrée ?`;
+          }
+        }
+
+        chargerProduits();
+      </script>
+    </body>
+    </html>

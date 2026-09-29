@@ -1,0 +1,66 @@
+# =============================================================================
+# StockLine — pile complète : front (nginx) + api (FastAPI) + db (PostgreSQL)
+# Syntaxe Compose v2 : pas de clé `version:` (obsolète).
+#
+# Prérequis : cp .env.example .env  (puis changez le mot de passe)
+# Démarrage : docker compose up -d --build
+# Front     : http://localhost:8080   API directe : http://localhost:8000/docs
+# =============================================================================
+
+name: stockline
+
+services:
+
+  api:
+    build: .
+    image: stockline-api:1.0.0
+    container_name: stockline-api
+    environment:
+      # `db` est le nom du service : Compose fournit la résolution DNS.
+      DATABASE_URL: "postgresql+psycopg2://${POSTGRES_USER:-stockline}:${POSTGRES_PASSWORD:?Definissez POSTGRES_PASSWORD dans .env (copiez .env.example)}@db:5432/${POSTGRES_DB:-stockline}"
+    ports:
+      # Accès direct à l'API pour le développement (docs interactives).
+      # En production, seul le front serait publié.
+      - "8000:8000"
+    depends_on:
+      db:
+        # Attend que le healthcheck de `db` passe au vert, pas juste
+        # que le conteneur soit démarré.
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: stockline-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-stockline}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definissez POSTGRES_PASSWORD dans .env (copiez .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-stockline}
+    volumes:
+      # Volume nommé : les données survivent à `docker compose down`
+      # (mais PAS à `down -v` — voir le cours).
+      - donnees-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+    # Pas de `ports:` : la base n'est joignable que depuis le réseau Compose.
+
+  front:
+    image: nginx:1.27-alpine
+    container_name: stockline-front
+    ports:
+      - "8080:80"
+    volumes:
+      # Bind mounts en lecture seule : la page statique et la conf nginx.
+      - ./front:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  donnees-db:

@@ -1,0 +1,14 @@
+# ConfigMap : la configuration NON sensible de l'API.
+# Le mot de passe, lui, reste dans le Secret db-credentials.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+data:
+  DB_HOST: db                # le nom DNS du Service PostgreSQL
+  DB_PORT: "5432"            # toujours des chaînes dans un ConfigMap
+  DB_NAME: stockline
+  LOG_LEVEL: info

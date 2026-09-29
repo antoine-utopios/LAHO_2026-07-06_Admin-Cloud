@@ -1,0 +1,62 @@
+# PostgreSQL en Deployment 1 replica + PVC.
+# Honnêteté d'architecte : pour une base avec identité stable et plusieurs
+# replicas, Kubernetes propose le StatefulSet. Ici 1 replica + PVC suffit
+# pour apprendre ; en production on préfère un service managé (RDS) — on ne
+# porte pas la responsabilité des sauvegardes/failover d'un SGBD dans le cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+    app: db
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate          # jamais 2 postgres sur le même volume RWO
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+        app.kubernetes.io/part-of: stockline
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          envFrom:
+            - secretRef:
+                name: db-credentials   # POSTGRES_USER / PASSWORD / DB
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata   # sous-dossier requis avec un volume monté
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "stockline", "-d", "stockline"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "stockline", "-d", "stockline"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: db-data

@@ -1,0 +1,35 @@
+# Tout ce qui ne doit JAMAIS entrer dans le contexte de build.
+# Règle : le contexte ne contient que ce dont le Dockerfile a besoin.
+
+# Environnements virtuels et caches Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Bases locales de développement
+*.db
+stockline.db
+
+# Secrets et configuration locale — ne doivent pas finir dans une couche
+.env
+.env.*
+!.env.example
+
+# Git et outillage
+.git/
+.gitignore
+
+# Tests (inutiles dans l'image de production)
+tests/
+
+# Fichiers Docker eux-mêmes (changent sans impacter le code)
+Dockerfile
+compose.yaml
+compose.override.yaml
+nginx.conf
+
+# Documentation et front (servi par nginx, pas par l'API)
+README.md
+front/

@@ -1,0 +1,19 @@
+# PersistentVolumeClaim : "je demande 1 Gi de stockage persistant".
+# Sur minikube, la StorageClass par défaut "standard" provisionne
+# dynamiquement un PV (hostPath) ; sur EKS ce sera un volume EBS via le
+# driver CSI. Le manifest, lui, ne change pas : c'est tout l'intérêt.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-data
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+spec:
+  accessModes:
+    - ReadWriteOnce          # monté en lecture-écriture par UN seul nœud
+  resources:
+    requests:
+      storage: 1Gi
+  # storageClassName omis => StorageClass par défaut du cluster
+  #   minikube : standard (hostPath) | EKS : gp2/gp3 (EBS)

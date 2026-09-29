@@ -1,0 +1,18 @@
+# Service ClusterIP de l'API : port 80 côté cluster, 8000 côté conteneur.
+# DNS interne : api.stockline.svc.cluster.local (ou juste "api" dans le namespace).
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+    app: api
+spec:
+  type: ClusterIP
+  selector:
+    app: api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

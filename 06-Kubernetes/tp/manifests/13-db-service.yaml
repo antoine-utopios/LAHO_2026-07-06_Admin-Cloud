@@ -1,0 +1,19 @@
+# Service ClusterIP : donne à la base un nom DNS stable dans le cluster.
+# Depuis n'importe quel pod du namespace : db:5432
+# Depuis un autre namespace : db.stockline.svc.cluster.local:5432
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+    app: db
+spec:
+  type: ClusterIP
+  selector:
+    app: db                  # cible les pods portant CE label
+  ports:
+    - name: postgres
+      port: 5432             # port du Service
+      targetPort: 5432       # port du conteneur

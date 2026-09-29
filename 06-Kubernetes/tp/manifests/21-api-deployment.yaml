@@ -1,0 +1,75 @@
+# API StockLine (FastAPI, port 8000) — image construite au J2 du bloc.
+# Points pédagogiques : env depuis ConfigMap + Secret, DATABASE_URL assemblée
+# avec la syntaxe $(VAR) (les variables référencées doivent être déclarées AVANT),
+# probes branchées sur /sante, requests/limits qui conditionnent le scheduling.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+    app: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+        app.kubernetes.io/part-of: stockline
+    spec:
+      containers:
+        - name: api
+          # Image construite au J2 du bloc (docker build -> stockline-api:1.0.0).
+          # Sur EKS : <compte>.dkr.ecr.eu-west-3.amazonaws.com/<PREFIX>-stockline-api:1.0.0
+          image: stockline-api:1.0.0
+          imagePullPolicy: IfNotPresent   # l'image est chargée via `minikube image load`
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef: { name: api-config, key: DB_HOST }
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef: { name: api-config, key: DB_PORT }
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef: { name: api-config, key: DB_NAME }
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef: { name: db-credentials, key: POSTGRES_USER }
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: db-credentials, key: POSTGRES_PASSWORD }
+            # $(VAR) n'est résolu que si VAR est déclarée plus haut dans CETTE liste
+            - name: DATABASE_URL
+              value: "postgresql+psycopg2://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef: { name: api-config, key: LOG_LEVEL }
+          readinessProbe:                 # pas Ready => retiré des endpoints du Service
+            httpGet:
+              path: /sante
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:                  # échec répété => conteneur redémarré
+            httpGet:
+              path: /sante
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:                     # réservé au scheduling (et base du HPA)
+              cpu: 100m
+              memory: 128Mi
+            limits:                       # plafond dur (mémoire dépassée => OOMKilled)
+              cpu: 500m
+              memory: 256Mi

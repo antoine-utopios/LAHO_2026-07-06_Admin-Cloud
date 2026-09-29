@@ -1,0 +1,8 @@
+# Namespace dédié à l'application : isole les objets StockLine du reste
+# du cluster (kubectl get pods -n stockline, quotas, droits par namespace).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline

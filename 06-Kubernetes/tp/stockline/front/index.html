@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockLine — Inventaire</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 720px; color: #222; }
+    h1 { color: #1a4fa0; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #1a4fa0; color: #fff; }
+    tr:nth-child(even) { background: #f4f6fa; }
+    #erreur { color: #b00020; font-weight: bold; }
+    .muted { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>StockLine — Produits</h1>
+  <p class="muted">Front statique minimal : la liste ci-dessous est chargée depuis
+    l'API via <code>fetch</code>. API attendue sur <code>http://127.0.0.1:8000</code>.</p>
+  <p id="erreur"></p>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Référence</th><th>Nom</th><th>Prix unitaire (€)</th><th>Seuil d'alerte</th></tr>
+    </thead>
+    <tbody id="produits"></tbody>
+  </table>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+
+    async function chargerProduits() {
+      try {
+        const reponse = await fetch(`${API_URL}/produits`);
+        if (!reponse.ok) {
+          throw new Error(`L'API a répondu ${reponse.status}`);
+        }
+        const produits = await reponse.json();
+        const corps = document.getElementById("produits");
+        corps.innerHTML = "";
+        if (produits.length === 0) {
+          document.getElementById("erreur").textContent =
+            "Aucun produit pour l'instant : créez-en un avec POST /produits.";
+          return;
+        }
+        for (const p of produits) {
+          const ligne = document.createElement("tr");
+          ligne.innerHTML =
+            `<td>${p.id}</td><td>${p.reference}</td><td>${p.nom}</td>` +
+            `<td>${p.prix_unitaire.toFixed(2)}</td><td>${p.seuil_alerte}</td>`;
+          corps.appendChild(ligne);
+        }
+      } catch (err) {
+        document.getElementById("erreur").textContent =
+          `Impossible de joindre l'API (${err.message}). L'API est-elle démarrée ?`;
+      }
+    }
+
+    chargerProduits();
+  </script>
+</body>
+</html>

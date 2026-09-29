@@ -1,0 +1,42 @@
+# Ingress : une seule porte d'entrée HTTP, routage par host + chemin.
+#   http://stockline.local/           -> Service front (page HTML)
+#   http://stockline.local/api/sante  -> Service api, réécrit en /sante
+# La réécriture est nécessaire car l'API FastAPI expose /sante, /produits…
+# à la racine, pas sous /api. $2 = ce que capture le 2e groupe du chemin.
+# Prérequis minikube : minikube addons enable ingress
+# Sur EKS : ingressClassName "alb" + AWS Load Balancer Controller (jour 7).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stockline
+  namespace: stockline
+  labels:
+    app.kubernetes.io/part-of: stockline
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: stockline.local
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api
+                port:
+                  number: 80
+          - path: /()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: front
+                port:
+                  number: 80
+  # TLS (survol J5) : décommentez après avoir créé le secret TLS
+  #   kubectl -n stockline create secret tls stockline-tls --cert=... --key=...
+  # tls:
+  #   - hosts: [stockline.local]
+  #     secretName: stockline-tls
