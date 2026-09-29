@@ -1,0 +1,29 @@
+# FICHIER CORRIGÉ (workshop de révision, étape 12) — les commentaires « panne »
+# ci-dessous décrivent le défaut d'origine, la ligne « CORRIGÉ » montre la réparation.
+# Panne 3 — le pod "rapport" ne démarre jamais, il reste bloqué.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rapport
+  namespace: pannes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rapport
+  template:
+    metadata:
+      labels:
+        app: rapport
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi     # CORRIGÉ : request réaliste
+                               #    (describe : "0/1 nodes are available: 1 Insufficient memory")
+            limits:
+              cpu: 500m
+              memory: 128Mi    # CORRIGÉ

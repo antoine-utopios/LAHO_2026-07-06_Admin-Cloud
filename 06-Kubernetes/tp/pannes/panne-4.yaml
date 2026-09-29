@@ -1,0 +1,32 @@
+# FICHIER CORRIGÉ (workshop de révision, étape 12) — les commentaires « panne »
+# ci-dessous décrivent le défaut d'origine, la ligne « CORRIGÉ » montre la réparation.
+# Panne 4 — le job de calcul "moulinette" meurt quelques secondes après le démarrage.
+# Le conteneur alloue ~120 Mi (stress) alors que la limite est 64 Mi.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moulinette
+  namespace: pannes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: moulinette
+  template:
+    metadata:
+      labels:
+        app: moulinette
+    spec:
+      containers:
+        - name: stress
+          image: polinux/stress
+          command: ["stress"]
+          args: ["--vm", "1", "--vm-bytes", "120M", "--vm-hang", "60"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 192Mi  # CORRIGÉ : > 120 Mi alloués + marge
+                             #    (describe : Last State: Terminated, Reason: OOMKilled)

@@ -1,0 +1,5 @@
+# Fichiers exclus du paquet Helm
+.git/
+*.swp
+*.tmp
+.DS_Store

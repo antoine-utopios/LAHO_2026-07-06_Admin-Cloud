@@ -1,0 +1,36 @@
+# FICHIER CORRIGÉ (workshop de révision, étape 12) — les commentaires « panne »
+# ci-dessous décrivent le défaut d'origine, la ligne « CORRIGÉ » montre la réparation.
+# Panne 6 — les pods "boutique" sont Running et Ready… mais le Service
+# ne répond pas (curl depuis un pod de test : connection refused / timeout).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: boutique
+  namespace: pannes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: boutique
+  template:
+    metadata:
+      labels:
+        app: boutique          # <- les pods portent app=boutique
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: boutique
+  namespace: pannes
+spec:
+  selector:
+    app: boutique              # CORRIGÉ : selector = labels des pods
+  ports:                       #    kubectl get endpoints boutique -> <none>
+    - port: 80
+      targetPort: 80

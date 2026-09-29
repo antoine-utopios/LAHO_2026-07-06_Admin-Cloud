@@ -1,0 +1,17 @@
+{{- if .Values.db.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  labels:
+    app: db
+    {{- include "stockline.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+{{- end }}

@@ -1,0 +1,23 @@
+# FICHIER CORRIGÉ (workshop de révision, étape 12) — les commentaires « panne »
+# ci-dessous décrivent le défaut d'origine, la ligne « CORRIGÉ » montre la réparation.
+# Panne 1 — l'application "catalogue" ne démarre pas.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalogue
+  namespace: pannes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: catalogue
+  template:
+    metadata:
+      labels:
+        app: catalogue
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine     # CORRIGÉ : tag existant
+          ports:
+            - containerPort: 80

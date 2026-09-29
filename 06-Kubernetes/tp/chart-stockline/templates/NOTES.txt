@@ -1,0 +1,20 @@
+StockLine est déployée dans le namespace {{ .Release.Namespace }} (release {{ .Release.Name }}).
+
+1. Vérifiez les pods :
+     kubectl get pods -n {{ .Release.Namespace }}
+
+{{- if .Values.ingress.enabled }}
+2. L'application est exposée via l'ingress sur :
+     http://{{ .Values.ingress.host }}/            (front)
+     http://{{ .Values.ingress.host }}/api/sante   (API)
+   Sur minikube : vérifiez /etc/hosts et, si driver docker, `minikube tunnel`.
+{{- else }}
+2. Pas d'ingress activé — testez l'API par port-forward :
+     kubectl -n {{ .Release.Namespace }} port-forward svc/api 8000:80
+     curl http://127.0.0.1:8000/sante
+{{- end }}
+
+{{- if .Values.api.autoscaling.enabled }}
+3. Autoscaling actif ({{ .Values.api.autoscaling.minReplicas }} à {{ .Values.api.autoscaling.maxReplicas }} replicas) :
+     kubectl -n {{ .Release.Namespace }} get hpa api
+{{- end }}

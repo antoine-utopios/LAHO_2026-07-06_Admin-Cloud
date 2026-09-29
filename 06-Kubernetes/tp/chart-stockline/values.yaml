@@ -1,0 +1,70 @@
+# Valeurs par défaut du chart StockLine.
+# Surcharge en ligne de commande :  helm install stockline . --set api.replicas=3
+# Surcharge par fichier          :  helm install stockline . -f values-eks.yaml
+
+api:
+  image:
+    repository: stockline-api        # EKS : <compte>.dkr.ecr.eu-west-3.amazonaws.com/stockline-api
+    tag: "1.0.0"                          # vide => .Chart.AppVersion ("1.0")
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  autoscaling:
+    enabled: false                   # true => le HPA pilote les replicas
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 60
+
+front:
+  image:
+    repository: stockline-front
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 64Mi
+
+db:
+  enabled: true                      # false => base externe (RDS) : voir externalDatabaseUrl
+  image:
+    repository: postgres
+    tag: 16-alpine
+  auth:
+    user: stockline
+    database: stockline
+    # Mot de passe : à fournir à l'installation, JAMAIS commité :
+    #   helm install stockline . --set db.auth.password="$(openssl rand -hex 16)"
+    password: ""
+  storage:
+    size: 1Gi
+    className: ""                    # vide => StorageClass par défaut
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Utilisé seulement si db.enabled=false (ex. RDS sur EKS)
+externalDatabaseUrl: ""
+
+ingress:
+  enabled: true
+  className: nginx                   # EKS : alb
+  host: stockline.local
+  annotations: {}
+  #  EKS avec AWS Load Balancer Controller :
+  #    alb.ingress.kubernetes.io/scheme: internet-facing
+  #    alb.ingress.kubernetes.io/target-type: ip

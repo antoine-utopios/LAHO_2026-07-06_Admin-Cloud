@@ -1,0 +1,12 @@
+apiVersion: v2
+name: stockline
+description: API d'inventaire StockLine (FastAPI + PostgreSQL + front statique) — fil rouge du cursus Admin Cloud
+type: application
+version: 0.1.0          # version du CHART (packaging)
+appVersion: "1.0"       # version de l'APPLICATION (tag d'image par défaut)
+keywords:
+  - inventaire
+  - fastapi
+  - formation
+maintainers:
+  - name: Utopios — cursus Admin Cloud 2026

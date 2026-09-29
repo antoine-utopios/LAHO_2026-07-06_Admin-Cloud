@@ -1,0 +1,41 @@
+# FICHIER CORRIGÉ (workshop de révision, étape 12) — les commentaires « panne »
+# ci-dessous décrivent le défaut d'origine, la ligne « CORRIGÉ » montre la réparation.
+# Panne 5 — "vitrine" tourne (Running) mais reste 0/1 : jamais prête,
+# donc jamais servie par son Service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vitrine
+  namespace: pannes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vitrine
+  template:
+    metadata:
+      labels:
+        app: vitrine
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80       # CORRIGÉ : le port où nginx écoute
+            periodSeconds: 5 #    (describe : "Readiness probe failed: connection refused")
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vitrine
+  namespace: pannes
+spec:
+  selector:
+    app: vitrine
+  ports:
+    - port: 80
+      targetPort: 80

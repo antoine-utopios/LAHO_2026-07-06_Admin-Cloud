@@ -1,0 +1,37 @@
+# FICHIER CORRIGÉ (workshop de révision, étape 12) — les commentaires « panne »
+# ci-dessous décrivent le défaut d'origine, la ligne « CORRIGÉ » montre la réparation.
+# Panne 2 — la base "compta-db" redémarre en boucle.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compta-db
+  namespace: pannes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: compta-db
+  template:
+    metadata:
+      labels:
+        app: compta-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: compta
+            # CORRIGÉ : le mot de passe vient d'un Secret, créé AVANT d'appliquer ce fichier :
+            #   kubectl -n pannes create secret generic compta-db \
+            #     --from-literal=POSTGRES_PASSWORD="$(openssl rand -hex 16)"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: compta-db
+                  key: POSTGRES_PASSWORD
+            # <- panne : POSTGRES_PASSWORD absent -> postgres refuse de démarrer.
+            #    Visible UNIQUEMENT dans kubectl logs : "Database is uninitialized
+            #    and superuser password is not specified"

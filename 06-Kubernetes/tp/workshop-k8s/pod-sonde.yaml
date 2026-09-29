@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: sonde
+  name: sonde
+spec:
+  containers:
+  - args:
+    - sleep
+    - "36000"
+    image: busybox:1.36
+    name: sonde
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
