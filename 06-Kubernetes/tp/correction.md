@@ -46,6 +46,12 @@ kubectl config set-context --current --namespace=stockline
 kubectl config view --minify | grep namespace
 ```
 
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 1
+```
+
 ## Etape 2
 
 1. Générez le manifest d'un pod busybox qui dort 10 heures, et lisez-le :
@@ -82,8 +88,14 @@ kubectl get pods
 5. Recréez-le depuis le fichier (vous en aurez besoin jusqu'au soir) :
 
 ```bash
-kubectl apply -f pod-sonde.yaml
+kubectl apply -f workshop-k8s/pod-sonde.yaml
 kubectl wait --for=condition=Ready pod/sonde --timeout=120s
+```
+
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 2
 ```
 
 ## Etape 3
@@ -119,6 +131,13 @@ kubectl get deploy front
 kubectl apply -f workshop-k8s/front-deployment.yaml
 kubectl get deploy front
 ```
+
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 3
+```
+
 ## Etape 4
 
 1. Générez le Service, lisez-le, appliquez-le :
@@ -150,6 +169,12 @@ kubectl exec sonde -- nslookup front.stockline.svc.cluster.local
 
 ```bash
 kubectl port-forward svc/front 8081:80
+```
+
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 4
 ```
 
 ## Etape 5
@@ -206,6 +231,13 @@ kubectl exec deploy/front -- ls /usr/share/nginx/html
 kubectl exec sonde -- wget -qO- http://front | grep '<title>'
 ```
 
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 5
+```
+
+
 ## Etape 6
 
 1. Créez le Secret avec un mot de passe aléatoire (il n'est écrit dans aucun fichier) :
@@ -240,6 +272,11 @@ kubectl get pv
 kubectl exec deploy/db -- pg_isready -U stockline -d stockline
 ```
 
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 6
+```
 ## Etape 7
 
 1. Lisez `21-api-deployment.yaml` : repérez d'où vient chaque variable, et la
@@ -283,6 +320,11 @@ kubectl exec sonde -- wget -qO- --header 'Content-Type: application/json' \
 kubectl exec sonde -- wget -qO- http://api/stocks/1; echo
 ```
 
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 7
+```
 ## Etape 8
 
 ```bash
@@ -332,6 +374,12 @@ kubectl get deploy api -o jsonpath='{.spec.template.spec.containers[0].image}'; 
 kubectl rollout history deploy/api
 ```
 
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 9
+```
+
 ## Etape 10
 
 1. Lisez puis appliquez l'Ingress :
@@ -359,6 +407,12 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/
 ```
 
 4. *(Facultatif, navigateur)* Ajoutez `127.0.0.1 stockline.local` à votre fichier `hosts` (`/etc/hosts`, ou `C:\Windows\System32\drivers\etc\hosts`), puis ouvrez `http://stockline.local:8080` : le tableau affiche SSD-500.
+
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 10
+```
 
 ## Etape 11
 
@@ -400,6 +454,12 @@ kubectl top pods -l app=api
 kubectl delete pod charge charge2
 ```
 
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 11
+```
+
 ## Etape 12
 
 1. Déployez les 6 applications cassées dans leur propre namespace :
@@ -427,6 +487,12 @@ kubectl -n pannes get deploy,pods,svc
 
 ```bash
 kubectl delete namespace pannes
+```
+
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 12
 ```
 
 ## Etape 13
@@ -461,4 +527,10 @@ kubectl get deploy api
 helm rollback stockline 1 -n stockline
 kubectl get deploy api
 helm history stockline -n stockline
+```
+
+### ✅ Point de contrôle
+
+```bash
+./workshop/verifier.sh 13
 ```

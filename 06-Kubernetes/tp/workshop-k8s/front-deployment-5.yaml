@@ -14,17 +14,17 @@ spec:
     metadata:
       labels:
         app: front
-      spec:
-        containers:
-        - image: nginx:1.27-alpine
-          name: nginx
-          resources: {}
-          volumeMounts:
-          - name: html
-            mountPath: /usr/share/nginx/html
-            readOnly: true
-        volumes:
+    spec:
+      containers:
+      - image: nginx:1.27-alpine
+        name: nginx
+        resources: {}
+        volumeMounts:
         - name: html
-          configMap:
-            name: front-html
+          mountPath: /usr/share/nginx/html
+          readOnly: true
+      volumes:
+      - name: html
+        configMap:
+          name: front-html
 status: {}
