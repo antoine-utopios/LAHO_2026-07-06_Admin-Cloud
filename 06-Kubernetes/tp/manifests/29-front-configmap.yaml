@@ -11,6 +11,11 @@ metadata:
     app.kubernetes.io/part-of: stockline
     app: front
 data:
+  MYSQL_HOST_PASSWORD: password
+  fichier.txt: |
+    Ceci sera
+    le contenu
+    du fichier
   index.html: |
     <!DOCTYPE html>
     <html lang="fr">

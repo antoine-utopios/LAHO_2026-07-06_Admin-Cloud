@@ -23,8 +23,8 @@ api:
 
 front:
   image:
-    repository: stockline-front
-    tag: "1.0.0"
+    repository: docker.io/library/nginx
+    tag: "alpine"
     pullPolicy: IfNotPresent
   replicas: 2
   resources:
