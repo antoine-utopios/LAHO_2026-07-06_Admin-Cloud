@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Rick & Morty Explorer')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <section class="hero">
+        <h1>
+            <span class="l1">Wubba</span>
+            <span class="l2">Lubba</span>
+            <span class="l3">Dub Dub</span>
+        </h1>
+        <p>Explore the multiverse — characters, locations, and episodes from every dimension.
+           Built with Spring Boot, Thymeleaf, and the public Rick &amp; Morty API.</p>
+    </section>
+
+    <section class="tiles">
+        <a th:href="@{/characters}" class="tile">
+            <div class="tile-num">01</div>
+            <h2>Characters</h2>
+            <p>Search through 800+ characters by name, status, species, gender, and type. From Ricks to Mortys to interdimensional council members.</p>
+        </a>
+        <a th:href="@{/locations}" class="tile">
+            <div class="tile-num">02</div>
+            <h2>Locations</h2>
+            <p>Browse planets, dimensions, microverses, and weird realms. Filter by type and dimension to find that one cursed cluster you forgot.</p>
+        </a>
+        <a th:href="@{/episodes}" class="tile">
+            <div class="tile-num">03</div>
+            <h2>Episodes</h2>
+            <p>Every episode across all seasons with air dates and full character lists. Filter by episode code (e.g. S01E05) or by name.</p>
+        </a>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

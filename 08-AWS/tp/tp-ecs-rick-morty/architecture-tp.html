@@ -1,0 +1,285 @@
+<title>TP Rick & Morty ECS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : un schéma d'architecture AWS pleine largeur, puis trois colonnes de lecture (requête, sécurité, ressources). */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1b2430;
+  --muted: #5b6676;
+  --line: #d9dee5;
+  --ink: #232f3e;          /* AWS Cloud */
+  --region: #00a4a6;
+  --vpc: #8c4fff;
+  --pub: #7aa116;
+  --pub-fill: rgba(122,161,22,.07);
+  --priv: #00a4a6;
+  --priv-fill: rgba(0,164,166,.07);
+  --ecs: #ed7100;
+  --ecs-fill: rgba(237,113,0,.06);
+  --req: #ed7100;           /* trafic utilisateur */
+  --ops: #5b6676;           /* déploiement / exploitation */
+  --label-bg: #ffffff;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161c; --surface: #1a2028; --fg: #e6eaf0; --muted: #9aa5b4; --line: #2c3440;
+    --ink: #8d9bb0; --pub-fill: rgba(122,161,22,.10); --priv-fill: rgba(0,164,166,.10);
+    --ecs-fill: rgba(237,113,0,.09); --req: #ff9a3c; --ops: #9aa5b4; --label-bg: #1a2028;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161c; --surface: #1a2028; --fg: #e6eaf0; --muted: #9aa5b4; --line: #2c3440;
+  --ink: #8d9bb0; --pub-fill: rgba(122,161,22,.10); --priv-fill: rgba(0,164,166,.10);
+  --ecs-fill: rgba(237,113,0,.09); --req: #ff9a3c; --ops: #9aa5b4; --label-bg: #1a2028;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 56px; display: grid; gap: 28px; }
+.page > * { min-width: 0; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); max-width: 70ch; margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 20px; margin: 0 0 12px; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 900px; height: auto; color: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); min-width: 900px; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 28px; height: 0; border-top: 2px solid var(--req); }
+.legend i.ops { border-top: 2px dashed var(--ops); }
+
+/* textes du schéma */
+.t-group { font: 600 13px var(--font-body); fill: var(--fg); }
+.t-group-sub { font: 400 11.5px var(--font-mono); fill: var(--muted); }
+.t-name { font: 600 13px var(--font-body); fill: var(--fg); }
+.t-detail { font: 400 11.5px var(--font-mono); fill: var(--muted); }
+.t-edge { font: 500 11.5px var(--font-mono); }
+.t-edge.req { fill: var(--req); }
+.t-edge.ops { fill: var(--ops); }
+.edge-bg { fill: var(--label-bg); }
+.req-line { stroke: var(--req); stroke-width: 2; fill: none; }
+.ops-line { stroke: var(--ops); stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; }
+.card { fill: var(--surface); stroke: var(--line); }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; align-items: start; }
+.cols > section { min-width: 0; }
+ol.flow { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: s; }
+ol.flow li { counter-increment: s; display: grid; grid-template-columns: 26px 1fr; gap: 10px; }
+ol.flow li::before { content: counter(s); width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--req); color: var(--req); font: 600 12px/21px var(--font-mono); text-align: center; }
+ol.flow li.ops::before { border-style: dashed; border-color: var(--ops); color: var(--ops); }
+ol.flow strong { display: block; }
+ol.flow span { color: var(--muted); font-size: 14px; }
+
+.sg { display: grid; gap: 8px; }
+.sg-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.sg-row .who { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+.sg-row .port { font-family: var(--font-mono); font-size: 13px; color: var(--req); font-variant-numeric: tabular-nums; }
+.sg-row .from { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.sg-arrow { text-align: center; color: var(--muted); font-size: 13px; line-height: 1; }
+
+.res { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.res th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 0 8px 8px 0; border-bottom: 1px solid var(--line); }
+.res td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.res td:first-child { white-space: nowrap; }
+.res .mono { color: var(--fg); }
+.table-wrap { overflow-x: auto; }
+
+.demo { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.demo li { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13.5px; }
+.demo b { font-weight: 600; }
+.foot { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-wrap: wrap; gap: 6px 24px; }
+.sg-box { fill: none; stroke: #dd344c; stroke-width: 1.4; stroke-dasharray: 5 4; }
+.t-sg { font: 500 11px var(--font-mono); fill: #dd344c; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.chips li { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13.5px; }
+.chips li.no { text-decoration: line-through; color: var(--muted); }
+ol.missions { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: m; }
+ol.missions li { counter-increment: m; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+ol.missions li::before { content: counter(m); width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--req); color: var(--req); font: 600 12px/21px var(--font-mono); text-align: center; }
+ol.missions strong { display: block; }
+ol.missions span { color: var(--muted); font-size: 14px; }
+</style>
+<div class="page">
+  <header>
+    <div class="eyebrow">TP Amazon ECS · région eu-west-3 (Paris)</div>
+    <h1>Rick &amp; Morty Explorer sur ECS Fargate</h1>
+    <p class="sub">Architecture cible du TP : une application Spring Boot / Thymeleaf dans une tâche Fargate, joignable directement par son IP publique, sans load balancer ni base de données. Les données viennent de l'API publique rickandmortyapi.com.</p>
+  </header>
+
+  <figure class="diagram" style="margin:0">
+    <svg viewBox="0 0 1200 660" role="img" aria-labelledby="dtitle">
+      <title id="dtitle">Architecture cible : utilisateurs vers une tâche Fargate avec IP publique sur le port 8080, image dans ECR, journaux dans CloudWatch, appels sortants vers l'API Rick and Morty</title>
+      <defs>
+        <symbol id="i-ecs" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#ed7100" d="M0 0h64v64H0z"/><path fill="#fff" d="m50 36.382-6-3V25a1 1 0 0 0-.515-.874L35 19.412V12.75l15 8.822zm1.507-16.244-17-10a1.001 1.001 0 0 0-1.507.863v9c0 .362.197.697.515.873L42 25.588V34c0 .38.214.725.553.895l8 4a1 1 0 0 0 .972-.044c.295-.183.475-.504.475-.85V21c0-.355-.188-.683-.493-.863M32 51.828 15 41.439V21.554l14-8.75v6.642l-7.53 4.706A1 1 0 0 0 21 25v13a1 1 0 0 0 .485.857l10 6a1 1 0 0 0 .994.021l10.509-5.732 5.047 2.883zm18.496-10.696-7-4a1 1 0 0 0-.975-.01l-10.498 5.726L23 37.434v-11.88l7.53-4.706A1 1 0 0 0 31 20v-9a1 1 0 0 0-1.53-.847l-16 10A1 1 0 0 0 13 21v21c0 .348.182.671.479.854l18 11a1 1 0 0 0 1.042 0l18-11a1 1 0 0 0-.025-1.722"/></g></symbol>
+<symbol id="i-fargate" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#ed7100" d="M0 0h64v64H0z"/><path fill="#fff" d="M42.467 46.382v-3.764l1.994-1v3.764zm-3.987-4.764 1.994 1v3.764l-1.994-1zm-4.983 9.764v-3.764l1.993-1v3.764zm-3.987-4.764 1.993 1v3.764l-1.993-1zm-4.984-.236v-3.764l1.994-1v3.764zm-3.987-4.764 1.994 1v3.764l-1.994-1zm2.99-2.5 1.759.882-1.758.882L21.77 40zm8.971 5 1.758.882-1.758.882L30.742 45zm8.97-5L43.23 40l-1.759.882L39.712 40zm4.433-.012-3.987-2a.99.99 0 0 0-.891 0l-3.987 2a1 1 0 0 0-.551.894v3.882l-3.541-1.776a.99.99 0 0 0-.892 0l-3.54 1.776V40a1 1 0 0 0-.552-.894l-3.987-2a.99.99 0 0 0-.89 0l-3.988 2a1 1 0 0 0-.55.894v6c0 .379.212.725.55.895l3.987 2a1 1 0 0 0 .891 0l3.541-1.777V51c0 .379.214.725.552.895l3.986 2a1 1 0 0 0 .892 0l3.986-2c.338-.17.552-.516.552-.895v-3.882l3.54 1.777a1 1 0 0 0 .892 0l3.987-2c.338-.17.55-.516.55-.895v-6a1 1 0 0 0-.55-.894M54 28.09c0 5.103-11.077 7.856-21.5 7.856S11 33.193 11 28.09c0-2.461 2.68-4.616 7.547-6.067l.568 1.917c-3.776 1.126-6.122 2.716-6.122 4.15 0 2.764 8.343 5.856 19.507 5.856s19.507-3.092 19.507-5.856c0-1.434-2.346-3.024-6.122-4.15l.568-1.917C51.32 23.474 54 25.629 54 28.09M32.5 12.064 40.547 15 32.5 17.936 24.453 15zm8.868 16.584c-1.556.7-4.155 1.516-7.871 1.645V19.701l8.97-3.273v10.485c0 .754-.431 1.435-1.1 1.735m-18.835-1.735V16.428l8.97 3.273v10.592c-3.716-.129-6.315-.945-7.87-1.645-.669-.3-1.1-.981-1.1-1.735m.283 3.56c1.87.842 5.07 1.846 9.684 1.846 4.615 0 7.813-1.004 9.684-1.846 1.383-.622 2.277-2.019 2.277-3.56V15a1 1 0 0 0-.656-.94l-10.964-4a1 1 0 0 0-.682 0l-10.964 4a1 1 0 0 0-.656.94v11.913c0 1.541.894 2.938 2.277 3.56"/></g></symbol>
+<symbol id="i-ecr" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#ed7100" d="M0 0h64v64H0z"/><path fill="#fff" d="M30.726 29.922c-.447.26-.726.745-.726 1.263v20.35l-15-8.677V23.01l17.172-9.933 14.916 7.38zm18.978-9.502c0-.518-.278-1-.783-1.288l-16.042-7.936a1.45 1.45 0 0 0-1.451-.002l-17.699 10.24c-.449.259-.729.743-.729 1.263v20.476c0 .518.279 1.001.728 1.262l16.088 9.306a1.45 1.45 0 0 0 1.456.001c.449-.259.728-.743.728-1.263v-20.98l16.978-9.821c.448-.259.726-.74.726-1.258M50 42.941l-12.996 8.592V44.41l6.599-4.994c.25-.19.397-.486.397-.8V30.48l6-3.474zm1.273-18.142a1.45 1.45 0 0 0-1.456 0l-6.938 4.014c-.24.13-.879.475-.879 1.217v8.087l-6.337 4.796a1.47 1.47 0 0 0-.659 1.221v8.412c0 .52.28 1.004.729 1.264.218.125.462.19.712.19.264 0 .537-.072.794-.222l14.036-9.28c.447-.26.725-.744.725-1.262V26.063c0-.52-.279-1.004-.727-1.264"/></g></symbol>
+<symbol id="i-task" viewBox="0 0 48 48"><path fill="#ed7100" fill-rule="evenodd" d="M20.25 36.375H36v-2H20.25zm0-12.25H36v-2H20.25zm0-12.25H36v-2H20.25zM13.375 37h3.25v-3.25h-3.25zm-1 2h5.25a1 1 0 0 0 1-1v-5.25a1 1 0 0 0-1-1h-5.25a1 1 0 0 0-1 1V38a1 1 0 0 0 1 1m1-14.25h3.25V21.5h-3.25zm-1 2h5.25a1 1 0 0 0 1-1V20.5a1 1 0 0 0-1-1h-5.25a1 1 0 0 0-1 1v5.25a1 1 0 0 0 1 1m1-14.25h3.25V9.25h-3.25zm-1 2h5.25a1 1 0 0 0 1-1V8.25a1 1 0 0 0-1-1h-5.25a1 1 0 0 0-1 1v5.25a1 1 0 0 0 1 1M9 44h29.5V4H9zM39.5 2H8a1 1 0 0 0-1 1v42a1 1 0 0 0 1 1h31.5a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1"/></symbol>
+<symbol id="i-igw" viewBox="0 0 48 48"><path fill="#8c4fff" fill-rule="evenodd" d="M33.431 35.178h-1.498V17.502a1 1 0 0 0-.589-.911l-.092-.042c-2.009-.907-4.088-1.846-7.076-1.846-3.123 0-5.415 1.009-7.68 2.134a1 1 0 0 0-.556.896v17.445h-1.463V16.312c2.434-1.98 5.943-3.107 9.71-3.107 3.5 0 6.838.997 9.244 2.748zm-9.245-23.973c-4.425 0-8.569 1.419-11.37 3.895a1 1 0 0 0-.339.749v20.329a1 1 0 0 0 1 1h3.463a1 1 0 0 0 1-1V18.356c1.92-.927 3.78-1.653 6.236-1.653 2.335 0 4.033.675 5.757 1.446v18.029a1 1 0 0 0 1 1h3.498a1 1 0 0 0 1-1v-20.72c0-.304-.139-.592-.378-.783-2.774-2.205-6.735-3.47-10.867-3.47m-.232 32.704C12.952 43.909 4 34.957 4 23.954S12.952 4 23.954 4C34.957 4 43.91 12.95 43.91 23.954c0 11.003-8.952 19.955-19.955 19.955m0-41.91C11.848 2 2 11.85 2 23.955c0 12.107 9.85 21.955 21.955 21.955 12.106 0 21.955-9.848 21.955-21.955C45.91 11.849 36.06 2 23.954 2"/></symbol>
+<symbol id="i-users" viewBox="0 0 48 48"><path fill="currentColor" fill-rule="evenodd" d="M28.639 9.286c0-2.915 2.413-5.286 5.38-5.286s5.378 2.371 5.378 5.286-2.412 5.286-5.378 5.286-5.38-2.371-5.38-5.286m11.524 7.048a11.7 11.7 0 0 0-2.035-1.001c1.97-1.31 3.269-3.531 3.269-6.047 0-4.017-3.31-7.286-7.378-7.286-4.069 0-7.38 3.269-7.38 7.286 0 2.51 1.293 4.728 3.256 6.039a11.9 11.9 0 0 0-3.546 2.1l1.303 1.518A9.77 9.77 0 0 1 34 16.572c1.802 0 3.569.505 5.109 1.461 2.74 1.702 4.538 4.692 4.844 7.967H34v2h11a1 1 0 0 0 1-1c0-4.343-2.236-8.43-5.837-10.666M8.639 9.286C8.639 6.371 11.052 4 14.019 4s5.378 2.371 5.378 5.286-2.412 5.286-5.378 5.286-5.38-2.371-5.38-5.286M14 26H4.046C4.53 20.717 8.81 16.572 14 16.572c1.802 0 3.569.505 5.109 1.461.432.269.849.575 1.24.91l1.303-1.517a11.71 11.71 0 0 0-3.524-2.093c1.97-1.31 3.269-3.531 3.269-6.047 0-4.017-3.31-7.286-7.378-7.286-4.069 0-7.38 3.269-7.38 7.286 0 2.515 1.298 4.737 3.268 6.046C5.302 17.071 2 21.638 2 27a1 1 0 0 0 1 1h11zm.046 18c.484-5.283 4.764-9.428 9.954-9.428 1.802 0 3.569.505 5.109 1.461 2.74 1.702 4.538 4.692 4.844 7.967zm4.593-16.714c0-2.915 2.413-5.286 5.38-5.286s5.378 2.371 5.378 5.286-2.412 5.286-5.378 5.286-5.38-2.371-5.38-5.286m11.524 7.048a11.7 11.7 0 0 0-2.035-1.001c1.97-1.31 3.269-3.531 3.269-6.047 0-4.017-3.31-7.286-7.378-7.286-4.069 0-7.38 3.269-7.38 7.286 0 2.515 1.298 4.737 3.268 6.046C15.302 35.071 12 39.638 12 45a1 1 0 0 0 1 1h22a1 1 0 0 0 1-1c0-4.343-2.236-8.43-5.837-10.666"/></symbol>
+<symbol id="i-client" viewBox="0 0 48 48"><path fill="currentColor" fill-rule="evenodd" d="M42.299 38.773v1.923a.793.793 0 0 1-.793.794H30.762a.794.794 0 0 1-.794-.794v-1.923c0-.438.355-.793.794-.793h10.744c.439 0 .793.355.793.793m1.498 3.626a.646.646 0 0 1-.644.645H4.645A.646.646 0 0 1 4 42.399v-5.388c0-.355.289-.644.645-.644h38.508c.355 0 .644.289.644.644zm-.644-8.032H4.645A2.65 2.65 0 0 0 2 37.011v5.388a2.65 2.65 0 0 0 2.645 2.645h38.508a2.65 2.65 0 0 0 2.644-2.645v-5.388a2.647 2.647 0 0 0-2.644-2.644M7.501 27.21h32.763V7.502H7.501zM40.842 5.502H6.924c-.784 0-1.423.637-1.423 1.421v20.865c0 .784.639 1.422 1.423 1.422h33.918c.784 0 1.422-.638 1.422-1.422V6.923c0-.784-.638-1.421-1.422-1.421m2.955 24.565a.645.645 0 0 1-.644.644H4.645A.645.645 0 0 1 4 30.067V4.644C4 4.289 4.289 4 4.645 4h38.508c.355 0 .644.289.644.644zM43.153 2H4.645A2.65 2.65 0 0 0 2 4.644v25.423a2.65 2.65 0 0 0 2.645 2.644h38.508a2.647 2.647 0 0 0 2.644-2.644V4.644A2.647 2.647 0 0 0 43.153 2"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 40 40"><g fill="none" fill-rule="evenodd"><path fill="#242f3e" d="M0 0h40v40H0z"/><path fill="#fff" d="M32.698 23.9c.361.47-.4 2.4-.74 3.264-.105.262.117.365.35.168 1.512-1.284 1.904-3.975 1.593-4.363-.307-.386-2.95-.717-4.563.432-.249.177-.206.42.07.389.907-.112 2.93-.357 3.29.11m-.842 2.01c.518-.378.074-.941-.454-.72-3.513 1.464-7.327 2.173-10.8 2.173-5.143 0-10.127-1.39-14.156-3.695-.352-.202-.613.155-.319.414 3.733 3.316 8.67 5.309 14.147 5.309 3.91 0 8.451-1.208 11.582-3.481m-2.144-5.215a6.6 6.6 0 0 1-1.459-.161q-.714-.163-1.093-.373-.233-.128-.29-.258a.7.7 0 0 1-.059-.26v-.47q0-.29.216-.292.083.002.173.033.091.034.241.098.48.21 1.044.324.564.113 1.126.113.895 0 1.384-.308a.97.97 0 0 0 .49-.873.88.88 0 0 0-.258-.65q-.256-.258-.952-.484l-1.375-.421q-1.045-.325-1.517-.938a2.17 2.17 0 0 1-.472-1.347q0-.581.258-1.027.255-.445.676-.761.427-.314.99-.478A4.3 4.3 0 0 1 30.025 12q.315 0 .64.04a6.3 6.3 0 0 1 1.15.252q.248.082.4.162a.9.9 0 0 1 .28.227.5.5 0 0 1 .083.308v.436q0 .291-.217.29-.114.002-.364-.111c-.54-.24-1.15-.356-1.82-.356q-.815 0-1.262.258-.448.26-.448.827 0 .388.283.655.281.267 1.044.51l1.342.423q1.028.322 1.466.888.441.568.441 1.295 0 .6-.25 1.078-.248.477-.689.817a3.1 3.1 0 0 1-1.05.518q-.615.179-1.343.178m-12.165-.244q-.248.002-.365-.087-.117-.09-.199-.365l-2.222-7.157a1.8 1.8 0 0 1-.082-.371q0-.227.233-.227h.927q.265 0 .374.09.106.086.19.364l1.59 6.12 1.477-6.12q.066-.278.181-.364.116-.09.38-.09h.765q.263 0 .38.09.116.086.182.364l1.493 6.2 1.64-6.2q.082-.278.19-.364.109-.09.373-.09h.878q.233 0 .233.227a1 1 0 0 1-.016.144 2 2 0 0 1-.068.227l-2.286 7.157q-.083.275-.2.365-.116.088-.364.087h-.813q-.264.001-.38-.094-.116-.099-.182-.373l-1.476-5.96-1.457 5.96q-.067.274-.183.373-.116.095-.38.094zM9.94 19.449q.465 0 .98-.17.513-.17.893-.592.232-.259.324-.591.09-.33.09-.801v-.388a8 8 0 0 0-1.757-.211q-.945 0-1.408.373-.464.37-.465 1.07 0 .645.35.978.347.332.993.332m3.846-1.408q0 .517.107.825.11.31.307.664a.4.4 0 0 1 .066.209q0 .148-.182.276l-.597.39a.5.5 0 0 1-.248.08.4.4 0 0 1-.282-.128 2 2 0 0 1-.339-.43 6 6 0 0 1-.29-.544q-1.112 1.28-2.785 1.28-1.194.001-1.89-.664-.696-.664-.696-1.78 0-1.182.863-1.903.86-.72 2.32-.721.48 0 1.002.073t1.084.203v-.68q.001-1.052-.446-1.482-.446-.428-1.54-.428a4.5 4.5 0 0 0-1.02.12 7.5 7.5 0 0 0-1.02.315 3 3 0 0 1-.33.122.7.7 0 0 1-.15.024q-.199.001-.2-.292v-.452q.001-.228.068-.323.066-.099.265-.195a6 6 0 0 1 1.192-.421 6 6 0 0 1 1.476-.18c1.126 0 1.952.254 2.477.754q.787.753.788 2.275z"/></g></symbol>
+<symbol id="i-region" viewBox="0 0 40 40"><g fill="none" fill-rule="evenodd"><path fill="#00a4a6" d="M0 0h40v40H0z"/><path fill="#fff" d="M14 20.026v-9h15.293l-4.147 4.146a.5.5 0 0 0 0 .708l4.147 4.146zm12.207-4.5 4.647-4.646a.5.5 0 0 0-.354-.854H14V8.97A1.528 1.528 0 0 0 13.495 6c-.845 0-1.532.687-1.532 1.531 0 .67.435 1.235 1.037 1.442v24.053h-3v1h7v-1h-3v-12h16.5a.5.5 0 0 0 .354-.854z"/></g></symbol>
+<symbol id="i-vpc" viewBox="0 0 40 40"><g fill="none" fill-rule="evenodd"><path fill="#8c4fff" d="M0 0h40v40H0z"/><path fill="#fff" d="m30.97 21.03-2.943-1.264v10.49c2.545-.353 2.932-2.969 2.948-3.088zm-3.943 9.24V19.76l-3.035 1.272v6.201c.013.054.445 2.767 3.035 3.036m.306-11.723a.5.5 0 0 1 .39.001l3.945 1.692a.5.5 0 0 1 .303.46v6.533c-.183 1.447-1.357 4.063-4.527 4.063-3.075 0-4.254-2.612-4.448-3.994l-.004-6.603c0-.2.12-.383.306-.46zm5.65.637-5.461-2.406-5.53 2.327v7.128c-.001.042-.054 2.868 1.657 4.623.917.941 2.194 1.42 3.795 1.42 1.602 0 2.887-.48 3.819-1.423 1.735-1.758 1.72-4.585 1.72-4.613zM31.98 31.55c-1.127 1.144-2.654 1.725-4.536 1.725-1.884 0-3.404-.58-4.517-1.727-2.005-2.063-1.94-5.197-1.935-5.329v-7.446a.5.5 0 0 1 .305-.46l6.035-2.54a.5.5 0 0 1 .396.003l5.956 2.625c.182.08.299.26.299.457v7.375c.002.125.027 3.255-2.003 5.317m-20.988-7.314h8v1h-8c-2.811 0-4.811-2.016-4.98-5.016A4 4 0 0 1 6 19.841c0-2.509 1.318-4.223 3.817-4.979a8 8 0 0 1-.032-.647c0-2.916 1.577-5.445 4.017-6.445 3.298-1.348 7.042-.894 9.106 1.104a8.2 8.2 0 0 1 1.76 2.485c.609-.45 1.4-.66 2.349-.614 1.78.09 3.149 1.713 3.433 4.007 1.498.124 2.485.883 3.01 2.308l-.937.346c-.428-1.157-1.208-1.673-2.531-1.673a.5.5 0 0 1-.5-.47c-.138-2.338-1.406-3.463-2.526-3.519-.945-.053-1.645.22-2.08.791a.5.5 0 0 1-.472.193.5.5 0 0 1-.395-.323 7.4 7.4 0 0 0-1.807-2.814c-1.788-1.73-5.09-2.099-8.031-.895-2.063.845-3.396 3.011-3.396 5.52 0 .272.035.695.066.958a.5.5 0 0 1-.376.544C8.169 16.29 7 17.678 7 19.841c0 .101-.001.201.009.302.14 2.495 1.703 4.093 3.983 4.093"/></g></symbol>
+<symbol id="i-pub" viewBox="0 0 40 40"><g fill="none" fill-rule="evenodd"><path fill="#7aa116" d="M0 0h40v40H0z"/><path fill="#fff" d="M19.536 22.049c1.106 0 2.006.899 2.006 2.005s-.9 2.006-2.006 2.006-2.006-.9-2.006-2.006.9-2.005 2.006-2.005m-.524 4.958v3.494h1v-3.489a3 3 0 0 0 2.53-2.958 3.01 3.01 0 0 0-3.006-3.005 3.01 3.01 0 0 0-3.006 3.005 3.006 3.006 0 0 0 2.482 2.953M10 33.014h19.012V18H10zm4.046-20.53A5.49 5.49 0 0 1 19.529 7a5.49 5.49 0 0 1 5.483 5.484V17H14.046zM29.512 17h-3.5v-4.516A6.49 6.49 0 0 0 19.529 6a6.49 6.49 0 0 0-6.483 6.484V17H9.5a.5.5 0 0 0-.5.5v16.014a.5.5 0 0 0 .5.5h20.012a.5.5 0 0 0 .5-.5V17.5a.5.5 0 0 0-.5-.5"/></g></symbol>
+<symbol id="i-logs" viewBox="0 0 48 48"><path fill="#e7157b" fill-rule="evenodd" d="M29.5 17c-3.258 0-6.03 2.092-7.062 5h2.169a5.5 5.5 0 0 1 4.893-3c3.032 0 5.5 2.467 5.5 5.5S32.532 30 29.5 30a5.49 5.49 0 0 1-4.24-2h-2.388a7.5 7.5 0 0 0 6.628 4c4.136 0 7.5-3.364 7.5-7.5S33.636 17 29.5 17M2 33h13v-2H2zm0-15h13v-2H2zm0 8h27v-2H2zm41.843 9.738-5.025-4.525a11.5 11.5 0 0 1-1.403 1.608l4.997 4.508a1.073 1.073 0 0 0 1.51-.08 1.075 1.075 0 0 0-.08-1.51m1.566 2.85a3.07 3.07 0 0 1-2.284 1.012 3.06 3.06 0 0 1-2.051-.785l-5.24-4.726A11.43 11.43 0 0 1 29.5 36c-5.12 0-9.467-3.366-10.951-8h2.128c1.397 3.51 4.822 6 8.823 6 5.238 0 9.5-4.262 9.5-9.5S34.738 15 29.5 15c-4.372 0-8.054 2.973-9.155 7h-2.063c1.146-5.143 5.737-9 11.218-9C35.84 13 41 18.158 41 24.5c0 1.777-.417 3.455-1.141 4.96l5.324 4.794a3.08 3.08 0 0 1 .226 4.334M1.999 41h19v-2H2zm0-31h21V8H2z"/></symbol>
+<symbol id="i-cw" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#e7157b" d="M0 0h64v64H0z"/><path fill="#fff" d="M42.184 39.381a4.095 4.095 0 0 0-8.189 0 4.095 4.095 0 0 0 8.189 0m2 0c0 3.353-2.734 6.081-6.095 6.081s-6.094-2.728-6.094-6.08c0-3.354 2.734-6.082 6.094-6.082s6.095 2.728 6.095 6.081m6.559 10.235-4.897-4.4a10 10 0 0 1-1.061 1.19l4.886 4.397a.806.806 0 0 0 1.131-.059.8.8 0 0 0-.059-1.128m-12.654-2.524c4.262 0 7.729-3.46 7.729-7.71 0-4.252-3.467-7.711-7.729-7.711-4.26 0-7.727 3.459-7.727 7.71s3.467 7.71 7.727 7.71m13.992 1.042a2.796 2.796 0 0 1 .207 3.946c-.553.61-1.317.92-2.083.92a2.8 2.8 0 0 1-1.872-.713l-5.161-4.646a9.67 9.67 0 0 1-5.083 1.446c-5.364 0-9.727-4.354-9.727-9.706s4.363-9.706 9.727-9.706c5.365 0 9.729 4.354 9.729 9.706a9.6 9.6 0 0 1-.921 4.095zM17.697 23.538c0 .401.023.8.07 1.185a.997.997 0 0 1-.806 1.101C15.084 26.308 12 27.772 12 32.157c0 3.323 1.836 5.157 3.377 6.11.672.423 1.263.638 1.761.643h8.989v1.996h-9c-.884-.01-1.827-.329-2.81-.947C12.708 38.964 10 36.62 10 32.157c0-5.27 3.526-7.293 5.71-8.04a14 14 0 0 1-.013-.579c0-4.378 2.976-8.916 6.924-10.56 4.611-1.927 9.498-.971 13.066 2.556 1.047 1.033 1.917 2.274 2.598 3.702a5.3 5.3 0 0 1 3.174-1.061c2.415 0 5.128 1.793 5.663 5.715C50.58 24.722 54 27.278 54 32.217c0 2.89-1.136 5.24-3.287 6.792l-1.172-1.616C51.173 36.214 52 34.473 52 32.217c0-4.978-4.189-6.217-5.99-6.519a.996.996 0 0 1-.824-1.127c-.255-3.04-2.045-4.401-3.727-4.401-1.057 0-2.05.516-2.725 1.416a.999.999 0 0 1-1.741-.26c-.634-1.752-1.547-3.223-2.712-4.375-1.43-1.411-5.348-4.444-10.89-2.132-3.193 1.33-5.694 5.16-5.694 8.72"/></g></symbol>
+<symbol id="i-internet" viewBox="0 0 48 48"><path fill="currentColor" fill-rule="evenodd" d="m34.59 29.79-3.593 3.591V21.76h-2V33.27l-3.441-3.497-1.426 1.403 5.195 5.28c.188.19.443.297.709.298h.004c.265 0 .52-.106.707-.293l5.259-5.258zm-12.24-2.066 1.414-1.414-5.258-5.258a1 1 0 0 0-.707-.293h-.004a1 1 0 0 0-.709.3l-5.196 5.277 1.426 1.402 3.441-3.495v13.311h2V24.131zm-2.017 9.848 7.067.007.002-2-7.067-.007zm25.693-8.442c0 2.487-.754 4.498-2.243 5.975-2.451 2.435-6.007 2.485-6.287 2.485h-.012l-4.763-.005.002-2 4.768.005c.04 0 2.998-.02 4.894-1.914 1.089-1.088 1.641-2.617 1.641-4.546 0-1.182-.325-2.95-3.13-4.67-1.474-.903-2.855-1.2-3.379-1.286a1 1 0 0 1-.832-1.105c-.178-2.095-1.159-3.56-2.703-4.029-1.335-.404-2.764.068-3.645 1.204a.99.99 0 0 1-.941.376 1 1 0 0 1-.786-.64c-.618-1.666-1.511-3.063-2.655-4.157-1.41-1.348-5.28-4.249-10.751-2.039-3.135 1.267-5.593 4.905-5.593 8.283 0 .377.024.755.071 1.122a1 1 0 0 1-.817 1.111C7.02 23.764 4 25.157 4 29.298c0 3.145 1.799 4.884 3.308 5.79a3.36 3.36 0 0 0 1.721.473l6.152.006-.002 2-6.151-.006a5.35 5.35 0 0 1-2.75-.759C4.681 35.844 2 33.595 2 29.298c0-3.715 2.084-6.547 5.623-7.719q-.012-.255-.012-.512c0-4.204 2.943-8.562 6.845-10.137 4.545-1.837 9.361-.919 12.882 2.448 1.032.986 1.89 2.172 2.559 3.536a5.3 5.3 0 0 1 4.665-.788c2.189.664 3.672 2.597 4.053 5.234 1.133.282 2.31.772 3.326 1.395 2.749 1.683 4.085 3.77 4.085 6.375"/></symbol>
+        <marker id="m-req" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--req)"/></marker>
+        <marker id="m-ops" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ops)"/></marker>
+      </defs>
+
+      <rect x="180" y="20" width="840" height="620" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+      <use href="#i-cloud" x="180" y="20" width="32" height="32"/>
+      <text class="t-group" x="220" y="41">AWS Cloud</text>
+
+      <rect x="200" y="64" width="800" height="560" fill="none" stroke="var(--region)" stroke-width="1.5" stroke-dasharray="7 5"/>
+      <use href="#i-region" x="200" y="64" width="28" height="28"/>
+      <text class="t-group" x="236" y="83">Région eu-west-3</text>
+      <text class="t-group-sub" x="356" y="83">Paris</text>
+
+      <rect x="225" y="108" width="480" height="480" fill="none" stroke="var(--vpc)" stroke-width="1.5"/>
+      <use href="#i-vpc" x="225" y="108" width="28" height="28"/>
+      <text class="t-group" x="261" y="127">VPC rm-vpc</text>
+      <text class="t-group-sub" x="345" y="127">sans passerelle NAT</text>
+
+      <rect x="245" y="148" width="220" height="425" fill="none" stroke="var(--region)" stroke-width="1" stroke-dasharray="4 4"/>
+      <text class="t-group-sub" x="255" y="166">Zone eu-west-3a</text>
+      <rect x="480" y="148" width="210" height="425" fill="none" stroke="var(--region)" stroke-width="1" stroke-dasharray="4 4"/>
+      <text class="t-group-sub" x="490" y="166">Zone eu-west-3b</text>
+
+      <rect x="256" y="176" width="198" height="385" fill="var(--pub-fill)" stroke="var(--pub)"/>
+      <use href="#i-pub" x="256" y="176" width="22" height="22"/>
+      <text class="t-group-sub" x="283" y="191">Sous-réseau public</text>
+      <rect x="491" y="176" width="188" height="385" fill="var(--pub-fill)" stroke="var(--pub)"/>
+      <use href="#i-pub" x="491" y="176" width="22" height="22"/>
+      <text class="t-group-sub" x="518" y="191">Sous-réseau public</text>
+
+      <rect x="268" y="236" width="400" height="258" fill="var(--ecs-fill)" stroke="var(--ecs)" stroke-dasharray="6 4" rx="4"/>
+      <use href="#i-fargate" x="640" y="244" width="22" height="22"/>
+      <use href="#i-ecs" x="483" y="455" width="22" height="22"/>
+      <text class="t-group" x="512" y="466">Cluster rm-cluster</text>
+      <text class="t-group-sub" x="512" y="482">service rm-service · 1 tâche</text>
+
+      <rect class="sg-box" x="290" y="264" width="150" height="168" rx="3"/>
+      <text class="t-sg" x="298" y="280">rm-sg · TCP 8080</text>
+      <use href="#i-task" x="341" y="292" width="48" height="48"/>
+      <text class="t-name" x="365" y="358" text-anchor="middle">Tâche Fargate</text>
+      <text class="t-detail" x="365" y="374" text-anchor="middle">rickandmorty :8080</text>
+      <text class="t-detail" x="365" y="389" text-anchor="middle">0,5 vCPU / 1 Go</text>
+      <text class="t-detail" x="365" y="404" text-anchor="middle">APP_ENV=ecs</text>
+      <text class="t-detail" x="365" y="419" text-anchor="middle">IP publique</text>
+
+      <use href="#i-igw" x="205" y="180" width="40" height="40"/>
+
+      <use href="#i-users" x="61" y="176" width="48" height="48" style="color:var(--fg)"/>
+      <text class="t-name" x="85" y="242" text-anchor="middle">Utilisateurs</text>
+      <text class="t-detail" x="85" y="257" text-anchor="middle">navigateur</text>
+      <text class="t-edge req" x="85" y="275" text-anchor="middle">http://IP:8080</text>
+
+      <use href="#i-client" x="61" y="496" width="48" height="48" style="color:var(--fg)"/>
+      <text class="t-name" x="85" y="562" text-anchor="middle">Poste stagiaire</text>
+      <text class="t-detail" x="85" y="577" text-anchor="middle">Docker · AWS CLI</text>
+
+      <rect class="card" x="740" y="130" width="240" height="76" rx="6"/>
+      <use href="#i-ecr" x="754" y="148" width="40" height="40"/>
+      <text class="t-name" x="806" y="162">Amazon ECR</text>
+      <text class="t-detail" x="806" y="178">rm-rickandmorty</text>
+      <text class="t-detail" x="806" y="193">tag 1.0</text>
+
+      <rect class="card" x="740" y="236" width="240" height="76" rx="6"/>
+      <use href="#i-cw" x="754" y="254" width="40" height="40"/>
+      <text class="t-name" x="806" y="268">CloudWatch Logs</text>
+      <text class="t-detail" x="806" y="284">journaux de</text>
+      <text class="t-detail" x="806" y="299">l'application</text>
+
+      <use href="#i-internet" x="1086" y="446" width="48" height="48" style="color:var(--fg)"/>
+      <text class="t-name" x="1110" y="512" text-anchor="middle">API publique</text>
+      <text class="t-detail" x="1110" y="527" text-anchor="middle">rickandmortyapi.com</text>
+
+      <path class="req-line" d="M112,200 H203" marker-end="url(#m-req)"/>
+      <path class="req-line" d="M247,200 H365 V288" marker-end="url(#m-req)"/>
+      <path class="req-line" d="M440,410 H720 V470 H1082" marker-end="url(#m-req)"/>
+      <rect class="edge-bg" x="815" y="476" width="110" height="15" rx="2"/>
+      <text class="t-edge req" x="870" y="487" text-anchor="middle">HTTPS sortant</text>
+
+      <path class="ops-line" d="M740,168 H420 V260" marker-end="url(#m-ops)"/>
+      <rect class="edge-bg" x="560" y="152" width="74" height="15" rx="2"/>
+      <text class="t-edge ops" x="597" y="163" text-anchor="middle">image 1.0</text>
+      <path class="ops-line" d="M440,320 H712 V274 H736" marker-end="url(#m-ops)"/>
+      <rect class="edge-bg" x="545" y="327" width="64" height="15" rx="2"/>
+      <text class="t-edge ops" x="577" y="338" text-anchor="middle">journaux</text>
+      <path class="ops-line" d="M112,520 H150 V606 H990 V168 H984" marker-end="url(#m-ops)"/>
+      <rect class="edge-bg" x="520" y="598" width="120" height="16" rx="2"/>
+      <text class="t-edge ops" x="580" y="610" text-anchor="middle">docker push :1.0</text>
+    </svg>
+    <div class="legend">
+      <span><i></i> trafic de l'application</span>
+      <span><i class="ops"></i> déploiement et journaux</span>
+      <span>Icônes : AWS Architecture Icons</span>
+    </div>
+  </figure>
+
+  <div class="cols">
+    <section>
+      <h2>Contraintes</h2>
+      <ul class="chips">
+        <li>ECS Fargate</li>
+        <li>Image dans ECR</li>
+        <li>Journaux dans CloudWatch</li>
+        <li>Health check du conteneur</li>
+        <li>0,5 vCPU / 1 Go</li>
+        <li>Port 8080</li>
+        <li>Préfixe <code>rm-</code></li>
+        <li class="no">Load balancer</li>
+        <li class="no">Base de données</li>
+        <li class="no">Passerelle NAT</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Missions</h2>
+      <ol class="missions">
+        <li><div><strong>Prendre en main l'application</strong><span>la faire tourner en local</span></div></li>
+        <li><div><strong>Préparer le réseau</strong><span>joignable sur 8080 uniquement, sans NAT</span></div></li>
+        <li><div><strong>Publier l'image</strong><span>ECR, tag 1.0</span></div></li>
+        <li><div><strong>Lancer l'application sur ECS</strong><span>1 instance permanente, Running et Healthy</span></div></li>
+        <li><div><strong>Accéder à l'application</strong><span>badge ECS visible dans le navigateur</span></div></li>
+        <li><div><strong>Éprouver l'architecture</strong><span>panne, 2 instances, APP_ENV=production</span></div></li>
+        <li><div><strong>Piloter en AWS CLI</strong><span>état, adresse, journaux, mise à l'échelle</span></div></li>
+        <li><div><strong>Nettoyer</strong><span>plus aucune ressource rm- facturée</span></div></li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Ressources attendues</h2>
+      <div class="table-wrap">
+        <table class="res">
+          <thead><tr><th>Service</th><th>Nom</th></tr></thead>
+          <tbody>
+            <tr><td>VPC</td><td class="mono">rm-vpc</td></tr>
+            <tr><td>Groupe de sécurité</td><td class="mono">rm-sg</td></tr>
+            <tr><td>ECR</td><td class="mono">rm-rickandmorty</td></tr>
+            <tr><td>Journaux</td><td class="mono">/ecs/rm-rickandmorty</td></tr>
+            <tr><td>Cluster</td><td class="mono">rm-cluster</td></tr>
+            <tr><td>Service</td><td class="mono">rm-service</td></tr>
+            <tr><td>Définition de tâche</td><td class="mono">rm-rickandmorty</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="foot">
+    <span>Code source : github.com/mohamedutopios/rick-morty-thymeleaf</span>
+    <span>Énoncé détaillé : ENONCE.md</span>
+  </div>
+</div>

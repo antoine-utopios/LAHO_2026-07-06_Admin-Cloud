@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${episode.name} + ' · R&M Explorer')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <a th:href="@{/episodes}" class="btn btn-secondary" style="margin-bottom: 1.5rem;">← Back to list</a>
+
+    <article class="detail" style="grid-template-columns: 1fr;">
+        <div class="detail-info">
+            <h1 th:text="${episode.name}">Episode name</h1>
+
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <div class="label">Code</div>
+                    <div class="value" th:text="${episode.episode}">S01E01</div>
+                </div>
+                <div class="detail-field alt">
+                    <div class="label">Air date</div>
+                    <div class="value" th:text="${episode.airDate}">—</div>
+                </div>
+                <div class="detail-field cyan">
+                    <div class="label">Characters</div>
+                    <div class="value" th:text="${episode.characterCount()} + ' total'">0</div>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <h2 class="section-title" th:if="${characters != null and !#lists.isEmpty(characters)}">
+        Cast <span class="count" th:text="'(showing ' + ${#lists.size(characters)} + ' of ' + ${totalCharacters} + ')'"></span>
+    </h2>
+
+    <div class="grid" th:if="${characters != null and !#lists.isEmpty(characters)}">
+        <a th:each="c : ${characters}"
+           th:href="@{/characters/{id}(id=${c.id})}"
+           class="card">
+            <img class="card-image" th:src="${c.image}" th:alt="${c.name}" loading="lazy">
+            <div class="card-body">
+                <div class="card-title" th:text="${c.name}">Name</div>
+                <div class="card-meta">
+                    <span class="status"
+                          th:classappend="${c.status == 'Alive' ? 'status-alive' : (c.status == 'Dead' ? 'status-dead' : 'status-unknown')}"
+                          th:text="${c.status}">Alive</span>
+                    <span><strong th:text="${c.species}">Species</strong></span>
+                </div>
+            </div>
+        </a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

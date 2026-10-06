@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${character.name} + ' · R&M Explorer')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <a th:href="@{/characters}" class="btn btn-secondary" style="margin-bottom: 1.5rem;">← Back to list</a>
+
+    <article class="detail">
+        <img class="detail-image" th:src="${character.image}" th:alt="${character.name}">
+        <div class="detail-info">
+            <h1 th:text="${character.name}">Name</h1>
+
+            <span class="status"
+                  th:classappend="${character.status == 'Alive' ? 'status-alive' : (character.status == 'Dead' ? 'status-dead' : 'status-unknown')}"
+                  th:text="${character.status}">Alive</span>
+
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <div class="label">Species</div>
+                    <div class="value" th:text="${character.species}">—</div>
+                </div>
+                <div class="detail-field" th:if="${character.type != null and !character.type.isEmpty()}">
+                    <div class="label">Type</div>
+                    <div class="value" th:text="${character.type}">—</div>
+                </div>
+                <div class="detail-field alt">
+                    <div class="label">Gender</div>
+                    <div class="value" th:text="${character.gender}">—</div>
+                </div>
+                <div class="detail-field alt" th:if="${character.origin != null}">
+                    <div class="label">Origin</div>
+                    <div class="value">
+                        <a th:if="${character.originId() != null}"
+                           th:href="@{/locations/{id}(id=${character.originId()})}"
+                           th:text="${character.origin.name}">Earth</a>
+                        <span th:unless="${character.originId() != null}" th:text="${character.origin.name}">unknown</span>
+                    </div>
+                </div>
+                <div class="detail-field cyan" th:if="${character.location != null}">
+                    <div class="label">Last known location</div>
+                    <div class="value">
+                        <a th:if="${character.locationId() != null}"
+                           th:href="@{/locations/{id}(id=${character.locationId()})}"
+                           th:text="${character.location.name}">Earth</a>
+                        <span th:unless="${character.locationId() != null}" th:text="${character.location.name}">unknown</span>
+                    </div>
+                </div>
+                <div class="detail-field cyan">
+                    <div class="label">Episodes</div>
+                    <div class="value" th:text="${character.episodeCount()} + ' appearances'">0</div>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <h2 class="section-title" th:if="${episodes != null and !#lists.isEmpty(episodes)}">
+        First episodes <span class="count" th:text="'(showing ' + ${#lists.size(episodes)} + ' of ' + ${character.episodeCount()} + ')'"></span>
+    </h2>
+
+    <div class="grid" th:if="${episodes != null and !#lists.isEmpty(episodes)}">
+        <a th:each="e : ${episodes}"
+           th:href="@{/episodes/{id}(id=${e.id})}"
+           class="card">
+            <div class="card-body">
+                <div class="card-title" th:text="${e.episode}">S01E01</div>
+                <div class="card-meta">
+                    <span><strong th:text="${e.name}">Pilot</strong></span>
+                    <span th:text="'Aired ' + ${e.airDate}">Air date</span>
+                    <span th:text="${e.characterCount()} + ' characters'">0</span>
+                </div>
+            </div>
+        </a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Rick & Morty Explorer'">Rick & Morty Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav th:fragment="nav" class="topbar">
+    <a th:href="@{/}" class="brand">
+        <span class="brand-mark">R&amp;M</span>
+        <span class="brand-text">DIMENSION EXPLORER</span>
+    </a>
+    <div class="nav-links">
+        <a th:href="@{/characters}">Characters</a>
+        <a th:href="@{/locations}">Locations</a>
+        <a th:href="@{/episodes}">Episodes</a>
+    </div>
+    <div class="env-badge" th:if="${@environment.getProperty('APP_ENV')}"
+         th:text="${@environment.getProperty('APP_ENV')}">env</div>
+</nav>
+
+<!-- Pagination réutilisable -->
+<div th:fragment="pagination(result, page, baseUrl, queryString)" class="pagination" th:if="${result?.info != null and result.info.pages != null and result.info.pages > 1}">
+    <a th:if="${result.info.prev != null}"
+       th:href="@{|${baseUrl}?page=${page - 1}${queryString}|}"
+       class="page-btn">← Prev</a>
+    <span th:unless="${result.info.prev != null}" class="page-btn disabled">← Prev</span>
+
+    <span class="page-info">
+        Page <strong th:text="${page}">1</strong> / <span th:text="${result.info.pages}">1</span>
+        · <span th:text="${result.info.count}">0</span> results
+    </span>
+
+    <a th:if="${result.info.next != null}"
+       th:href="@{|${baseUrl}?page=${page + 1}${queryString}|}"
+       class="page-btn">Next →</a>
+    <span th:unless="${result.info.next != null}" class="page-btn disabled">Next →</span>
+</div>
+
+<!-- Footer -->
+<footer th:fragment="footer" class="footer">
+    <p>Powered by the public <a href="https://rickandmortyapi.com" target="_blank" rel="noopener">Rick and Morty API</a></p>
+    <p class="footer-meta">Stateless · Containerized · App Runner ready</p>
+</footer>
+
+</body>
+</html>

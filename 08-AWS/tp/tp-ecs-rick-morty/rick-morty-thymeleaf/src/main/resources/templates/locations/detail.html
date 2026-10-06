@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${location.name} + ' · R&M Explorer')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <a th:href="@{/locations}" class="btn btn-secondary" style="margin-bottom: 1.5rem;">← Back to list</a>
+
+    <article class="detail" style="grid-template-columns: 1fr;">
+        <div class="detail-info">
+            <h1 th:text="${location.name}">Location name</h1>
+
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <div class="label">Type</div>
+                    <div class="value" th:text="${location.type ?: 'unknown'}">—</div>
+                </div>
+                <div class="detail-field alt">
+                    <div class="label">Dimension</div>
+                    <div class="value" th:text="${location.dimension ?: 'unknown'}">—</div>
+                </div>
+                <div class="detail-field cyan">
+                    <div class="label">Residents</div>
+                    <div class="value" th:text="${location.residentCount()} + ' total'">0</div>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <h2 class="section-title" th:if="${residents != null and !#lists.isEmpty(residents)}">
+        Residents <span class="count" th:text="'(showing ' + ${#lists.size(residents)} + ' of ' + ${totalResidents} + ')'"></span>
+    </h2>
+
+    <div class="grid" th:if="${residents != null and !#lists.isEmpty(residents)}">
+        <a th:each="r : ${residents}"
+           th:href="@{/characters/{id}(id=${r.id})}"
+           class="card">
+            <img class="card-image" th:src="${r.image}" th:alt="${r.name}" loading="lazy">
+            <div class="card-body">
+                <div class="card-title" th:text="${r.name}">Name</div>
+                <div class="card-meta">
+                    <span class="status"
+                          th:classappend="${r.status == 'Alive' ? 'status-alive' : (r.status == 'Dead' ? 'status-dead' : 'status-unknown')}"
+                          th:text="${r.status}">Alive</span>
+                    <span><strong th:text="${r.species}">Species</strong></span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="empty" th:if="${residents == null or #lists.isEmpty(residents)}">
+        <div class="empty-icon">∅</div>
+        <p>No known residents in this location.</p>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

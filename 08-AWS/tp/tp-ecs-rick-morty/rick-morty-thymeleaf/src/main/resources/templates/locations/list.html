@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Locations · R&M Explorer')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <header class="page-header">
+        <h1 class="page-title"><span class="accent-pink">//</span> Locations</h1>
+        <p class="page-subtitle">Planets, dimensions, microverses</p>
+    </header>
+
+    <form method="get" th:action="@{/locations}" class="filters">
+        <div>
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" th:value="${name}" placeholder="Earth, Citadel, ...">
+        </div>
+        <div>
+            <label for="type">Type</label>
+            <input type="text" id="type" name="type" th:value="${type}" placeholder="Planet, Microverse, Cluster, ...">
+        </div>
+        <div>
+            <label for="dimension">Dimension</label>
+            <input type="text" id="dimension" name="dimension" th:value="${dimension}" placeholder="C-137, Replacement, ...">
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn">Apply filters</button>
+            <a th:href="@{/locations}" class="btn btn-secondary">Reset</a>
+        </div>
+    </form>
+
+    <div th:if="${result?.results == null or #lists.isEmpty(result.results)}" class="empty">
+        <div class="empty-icon">∅</div>
+        <p>No location matches your filters.</p>
+    </div>
+
+    <section class="grid" th:if="${result?.results != null and !#lists.isEmpty(result.results)}">
+        <a th:each="loc : ${result.results}"
+           th:href="@{/locations/{id}(id=${loc.id})}"
+           class="card">
+            <div class="card-body" style="padding: 1.5rem;">
+                <div class="card-title" th:text="${loc.name}">Location</div>
+                <div class="card-meta">
+                    <span>Type: <strong th:text="${loc.type ?: 'unknown'}">—</strong></span>
+                    <span>Dimension: <strong th:text="${loc.dimension ?: 'unknown'}">—</strong></span>
+                    <span th:text="${loc.residentCount()} + ' residents'">0 residents</span>
+                </div>
+            </div>
+        </a>
+    </section>
+
+    <div th:replace="~{fragments/layout :: pagination(
+        result=${result},
+        page=${page},
+        baseUrl='/locations',
+        queryString=${queryString}
+    )}"></div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Characters · R&M Explorer')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <header class="page-header">
+        <h1 class="page-title"><span class="accent">//</span> Characters</h1>
+        <p class="page-subtitle">Filter the multiverse population</p>
+    </header>
+
+    <!-- Filtres -->
+    <form method="get" th:action="@{/characters}" class="filters">
+        <div>
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" th:value="${name}" placeholder="rick, morty, ...">
+        </div>
+        <div>
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="">— any —</option>
+                <option th:each="s : ${statuses}"
+                        th:value="${s}"
+                        th:text="${s}"
+                        th:selected="${s == status}"></option>
+            </select>
+        </div>
+        <div>
+            <label for="species">Species</label>
+            <input type="text" id="species" name="species" th:value="${species}" placeholder="Human, Alien, ...">
+        </div>
+        <div>
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender">
+                <option value="">— any —</option>
+                <option th:each="g : ${genders}"
+                        th:value="${g}"
+                        th:text="${g}"
+                        th:selected="${g == gender}"></option>
+            </select>
+        </div>
+        <div>
+            <label for="type">Type</label>
+            <input type="text" id="type" name="type" th:value="${type}" placeholder="Genetic experiment, ...">
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn">Apply filters</button>
+            <a th:href="@{/characters}" class="btn btn-secondary">Reset</a>
+        </div>
+    </form>
+
+    <!-- Résultats -->
+    <div th:if="${result?.results == null or #lists.isEmpty(result.results)}" class="empty">
+        <div class="empty-icon">∅</div>
+        <p>No character matches your filters in this dimension.</p>
+    </div>
+
+    <section class="grid" th:if="${result?.results != null and !#lists.isEmpty(result.results)}">
+        <a th:each="c : ${result.results}"
+           th:href="@{/characters/{id}(id=${c.id})}"
+           class="card">
+            <img class="card-image" th:src="${c.image}" th:alt="${c.name}" loading="lazy">
+            <div class="card-body">
+                <div class="card-title" th:text="${c.name}">Name</div>
+                <div class="card-meta">
+                    <span>
+                        <span class="status"
+                              th:classappend="${c.status == 'Alive' ? 'status-alive' : (c.status == 'Dead' ? 'status-dead' : 'status-unknown')}"
+                              th:text="${c.status}">Alive</span>
+                    </span>
+                    <span><strong th:text="${c.species}">Species</strong>
+                        <span th:if="${c.gender != null}" th:text="' · ' + ${c.gender}"></span>
+                    </span>
+                    <span th:if="${c.origin != null and c.origin.name != null}">
+                        Origin: <span th:text="${c.origin.name}">unknown</span>
+                    </span>
+                </div>
+            </div>
+        </a>
+    </section>
+
+    <!-- Pagination -->
+    <div th:replace="~{fragments/layout :: pagination(
+        result=${result},
+        page=${page},
+        baseUrl='/characters',
+        queryString=${queryString}
+    )}"></div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Episodes · R&M Explorer')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main>
+    <header class="page-header">
+        <h1 class="page-title"><span class="accent">//</span> Episodes</h1>
+        <p class="page-subtitle">Across every season and dimension</p>
+    </header>
+
+    <form method="get" th:action="@{/episodes}" class="filters">
+        <div>
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" th:value="${name}" placeholder="Pickle, Anatomy, ...">
+        </div>
+        <div>
+            <label for="episode">Episode code</label>
+            <input type="text" id="episode" name="episode" th:value="${episodeCode}" placeholder="S01E01, S03, ...">
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn">Apply filters</button>
+            <a th:href="@{/episodes}" class="btn btn-secondary">Reset</a>
+        </div>
+    </form>
+
+    <div th:if="${result?.results == null or #lists.isEmpty(result.results)}" class="empty">
+        <div class="empty-icon">∅</div>
+        <p>No episode matches your filters.</p>
+    </div>
+
+    <section class="grid" th:if="${result?.results != null and !#lists.isEmpty(result.results)}">
+        <a th:each="ep : ${result.results}"
+           th:href="@{/episodes/{id}(id=${ep.id})}"
+           class="card">
+            <div class="card-body" style="padding: 1.5rem;">
+                <div class="card-title" th:text="${ep.episode}">S01E01</div>
+                <div class="card-meta">
+                    <span><strong th:text="${ep.name}">Pilot</strong></span>
+                    <span th:text="'Aired ' + ${ep.airDate}">Aired</span>
+                    <span th:text="${ep.characterCount()} + ' characters'">0</span>
+                </div>
+            </div>
+        </a>
+    </section>
+
+    <div th:replace="~{fragments/layout :: pagination(
+        result=${result},
+        page=${page},
+        baseUrl='/episodes',
+        queryString=${queryString}
+    )}"></div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,17 @@
+services:
+  rickandmorty:
+    build: .
+    image: rickandmorty-thymeleaf:1.0
+    container_name: rickandmorty
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: local
+      PORT: 8080
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
