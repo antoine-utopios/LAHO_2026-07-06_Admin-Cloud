@@ -1,0 +1,4 @@
+{
+  "routeKey": "POST /commandes",
+  "body": "{\"client\": \"Test console\", \"produit\": \"Souris sans fil\", \"quantite\": 1, \"prix\": 39.5}"
+}

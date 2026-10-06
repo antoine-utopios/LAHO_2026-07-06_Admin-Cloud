@@ -1,0 +1,255 @@
+<title>Commandes serverless Lambda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : un schéma d'architecture AWS pleine largeur, puis trois colonnes de lecture (requête, sécurité, ressources). */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1b2430;
+  --muted: #5b6676;
+  --line: #d9dee5;
+  --ink: #232f3e;          /* AWS Cloud */
+  --region: #00a4a6;
+  --vpc: #8c4fff;
+  --pub: #7aa116;
+  --pub-fill: rgba(122,161,22,.07);
+  --priv: #00a4a6;
+  --priv-fill: rgba(0,164,166,.07);
+  --ecs: #ed7100;
+  --ecs-fill: rgba(237,113,0,.06);
+  --req: #ed7100;           /* trafic utilisateur */
+  --ops: #5b6676;           /* déploiement / exploitation */
+  --label-bg: #ffffff;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161c; --surface: #1a2028; --fg: #e6eaf0; --muted: #9aa5b4; --line: #2c3440;
+    --ink: #8d9bb0; --pub-fill: rgba(122,161,22,.10); --priv-fill: rgba(0,164,166,.10);
+    --ecs-fill: rgba(237,113,0,.09); --req: #ff9a3c; --ops: #9aa5b4; --label-bg: #1a2028;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161c; --surface: #1a2028; --fg: #e6eaf0; --muted: #9aa5b4; --line: #2c3440;
+  --ink: #8d9bb0; --pub-fill: rgba(122,161,22,.10); --priv-fill: rgba(0,164,166,.10);
+  --ecs-fill: rgba(237,113,0,.09); --req: #ff9a3c; --ops: #9aa5b4; --label-bg: #1a2028;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 56px; display: grid; gap: 28px; }
+.page > * { min-width: 0; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); max-width: 70ch; margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 20px; margin: 0 0 12px; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 980px; height: auto; color: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); min-width: 980px; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: inline-block; width: 28px; height: 0; border-top: 2px solid var(--req); }
+.legend i.ops { border-top: 2px dashed var(--ops); }
+
+/* textes du schéma */
+.t-group { font: 600 13px var(--font-body); fill: var(--fg); }
+.t-group-sub { font: 400 11.5px var(--font-mono); fill: var(--muted); }
+.t-name { font: 600 13px var(--font-body); fill: var(--fg); }
+.t-detail { font: 400 11.5px var(--font-mono); fill: var(--muted); }
+.t-edge { font: 500 11.5px var(--font-mono); }
+.t-edge.req { fill: var(--req); }
+.t-edge.ops { fill: var(--ops); }
+.edge-bg { fill: var(--label-bg); }
+.req-line { stroke: var(--req); stroke-width: 2; fill: none; }
+.ops-line { stroke: var(--ops); stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; }
+.card { fill: var(--surface); stroke: var(--line); }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; align-items: start; }
+.cols > section { min-width: 0; }
+ol.flow { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: s; }
+ol.flow li { counter-increment: s; display: grid; grid-template-columns: 26px 1fr; gap: 10px; }
+ol.flow li::before { content: counter(s); width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--req); color: var(--req); font: 600 12px/21px var(--font-mono); text-align: center; }
+ol.flow li.ops::before { border-style: dashed; border-color: var(--ops); color: var(--ops); }
+ol.flow strong { display: block; }
+ol.flow span { color: var(--muted); font-size: 14px; }
+
+.sg { display: grid; gap: 8px; }
+.sg-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.sg-row .who { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+.sg-row .port { font-family: var(--font-mono); font-size: 13px; color: var(--req); font-variant-numeric: tabular-nums; }
+.sg-row .from { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.sg-arrow { text-align: center; color: var(--muted); font-size: 13px; line-height: 1; }
+
+.res { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.res th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 0 8px 8px 0; border-bottom: 1px solid var(--line); }
+.res td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.res td:first-child { white-space: nowrap; }
+.res .mono { color: var(--fg); }
+.table-wrap { overflow-x: auto; }
+
+.demo { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.demo li { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13.5px; }
+.demo b { font-weight: 600; }
+.foot { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-wrap: wrap; gap: 6px 24px; }
+.fncard { fill: var(--surface); stroke: var(--ecs); }
+.qf { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.qf th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 0 8px 8px 0; border-bottom: 1px solid var(--line); }
+.qf td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.qf td:first-child { font-weight: 600; white-space: nowrap; }
+.qf td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+</style>
+<div class="page">
+  <header>
+    <div class="eyebrow">Démo AWS Lambda · région eu-west-3</div>
+    <h1>Gestion de commandes 100 % serverless</h1>
+    <p class="sub">Trois fonctions Lambda déclenchées de trois manières différentes : par une requête HTTP (API Gateway), par le dépôt d'un fichier (S3) et par l'horloge (EventBridge). Les données sont dans DynamoDB, les rapports dans S3. Aucun serveur, aucun VPC, rien de facturé au repos.</p>
+  </header>
+
+  <figure class="diagram" style="margin:0">
+    <svg viewBox="0 0 1200 620" role="img" aria-labelledby="dtitle">
+<title id="dtitle">Architecture serverless : API Gateway, S3 et EventBridge déclenchent trois fonctions Lambda qui lisent et écrivent dans DynamoDB et S3</title>
+<defs><symbol id="i-lambda" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#ed7100" d="M0 0h64v64H0z"/><path fill="#fff" d="M22.68 52h-9.106l10.264-21.59 4.562 9.451zm2.047-24.333a.99.99 0 0 0-.896-.564h-.003a.99.99 0 0 0-.896.569L11.097 52.569c-.147.31-.126.674.057.965.181.29.5.466.842.466H23.31a1 1 0 0 0 .9-.572l6.194-13.144a1 1 0 0 0-.005-.864zM51.008 52h-9.022L26.955 19.578a1 1 0 0 0-.903-.578h-5.924l.007-7h11.68l14.96 32.42c.163.354.516.58.904.58h3.33zm.996-9h-3.69l-14.96-32.42a1 1 0 0 0-.903-.58H19.14a1 1 0 0 0-.996.999l-.008 9A.993.993 0 0 0 19.131 21h6.286l15.03 32.422a1 1 0 0 0 .903.578h10.654c.55 0 .996-.448.996-1v-9c0-.552-.445-1-.996-1"/></g></symbol>
+<symbol id="i-fn" viewBox="0 0 48 48"><path fill="#ed7100" fill-rule="evenodd" d="M24 44C12.972 44 4 35.028 4 24S12.972 4 24 4s20 8.972 20 20-8.972 20-20 20m0-42C11.869 2 2 11.869 2 24s9.869 22 22 22 22-9.869 22-22S36.131 2 24 2m-6.769 33.25h-5.355l6.345-13.291 2.681 5.533zm1.883-16.035a1 1 0 0 0-.9-.564h-.003a1 1 0 0 0-.899.57L9.389 35.819a.998.998 0 0 0 .902 1.431h7.573c.387 0 .739-.223.905-.572l4.146-8.763a1 1 0 0 0-.004-.864zM36.125 35.25h-5.452l-9.912-21.297a1 1 0 0 0-.907-.578h-3.603l.004-4.125h7.22l9.864 21.295a1 1 0 0 0 .907.58h1.879zm1-6.125h-2.24L25.021 7.83a1 1 0 0 0-.908-.58h-8.857a1 1 0 0 0-1 .999l-.006 6.125a1 1 0 0 0 1 1.001h3.967l9.912 21.297a1 1 0 0 0 .906.578h7.09a1 1 0 0 0 1-1v-6.125a1 1 0 0 0-1-1"/></symbol>
+<symbol id="i-apigw" viewBox="0 0 64 64"><path fill="#8c4fff" d="M0 0h64v64H0z"/><path fill="#fff" fill-rule="evenodd" d="M28 44h3v-2h-3zm5 0h3v-2h-3zm-5-22h3v-2h-3zm5 0h3v-2h-3zm-11-9.26-10 5.834v27.808l10 5zM24 20h2v2h-2v20h2v2h-2v9a1 1 0 0 1-1.447.895l-12-6A1 1 0 0 1 10 47V18a1 1 0 0 1 .496-.864l12-7A1.002 1.002 0 0 1 24 11zm28-1.426L42 12.74v38.641l10-5zM54 18v29c0 .379-.214.725-.553.895l-12 6a1 1 0 0 1-.972-.044A1 1 0 0 1 40 53v-9h-2v-2h2V22h-2v-2h2v-9a.998.998 0 0 1 1.504-.864l12 7A1 1 0 0 1 54 18m-19.061 9.342-1.878-.684-4 11 1.878.684zm4.768 5.365a1 1 0 0 0 0-1.414l-3-3-1.414 1.414L37.586 32l-2.293 2.293 1.414 1.414zm-12.414 3-3-3a1 1 0 0 1 0-1.414l3-3 1.414 1.414L26.414 32l2.293 2.293z" clip-rule="evenodd"/></symbol>
+<symbol id="i-ddb" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#c925d1" d="M0 0h64v64H0z"/><path fill="#fff" d="M46.586 25.25H43a1 1 0 0 1-.822-.435 1.02 1.02 0 0 1-.114-.931l2.493-6.722h-8.913l-4.091 9.098H36c.32 0 .623.156.812.42.187.264.239.602.136.91l-3.66 11.101zm3.12-.297L31.709 43.15a.99.99 0 0 1-1.232.146 1.014 1.014 0 0 1-.423-1.18l4.56-13.833H30a1 1 0 0 1-.841-.463 1.02 1.02 0 0 1-.07-.966l5-11.12a1 1 0 0 1 .91-.593h11c.329 0 .636.163.823.435.187.273.23.62.115.931l-2.494 6.721H49a1 1 0 0 1 .924.624c.155.378.069.813-.217 1.102M41.002 44.22c-2.71 1.886-7.687 2.882-12.468 2.882-4.816 0-9.837-1.01-12.533-2.924l.001 3.816c0 1.664 4.768 3.984 12.532 3.984 7.495 0 12.468-2.702 12.468-4.49zm2.064-3.27c0 .187-.032.367-.064.546v5.993C43 51.079 36.51 54 28.533 54c-6.903 0-13.871-1.89-14.473-5.5h-.059L14 43.445V16.151h.001c0-3.996 7.487-6.151 14.532-6.151 3.94 0 7.73.64 10.397 1.756l-.766 1.868c-2.432-1.019-5.943-1.602-9.631-1.602-7.764 0-12.532 2.405-12.532 4.13 0 1.724 4.768 4.129 12.532 4.129.195 0 .399 0 .596-.007l.078 2.02c-.225.009-.45.009-.674.009-4.817 0-9.837-1.01-12.533-2.924v4.358h.001v.017c.005.53.489 1.143 1.364 1.72 1.982 1.288 5.55 2.168 9.539 2.351l-.091 2.02c-4.126-.19-7.75-1.069-10.086-2.416-.31.298-.726 1.056-.726 1.467 0 1.724 4.768 4.129 12.532 4.129.738 0 1.465-.025 2.162-.075l.14 2.017c-.743.054-1.518.08-2.302.08-4.817 0-9.837-1.009-12.533-2.924v3.67h.001c.005.547.489 1.16 1.364 1.737 2.268 1.474 6.549 2.393 11.168 2.393h.33v2.022h-.33c-4.778 0-9.86-1.008-12.532-2.543-.322.298 0 1.01 0 1.548 0 1.725 4.768 4.13 12.532 4.13s12.532-2.405 12.532-4.13c0-.61-.6-1.174-1.092-1.538-.41.247-.86.483-1.372.7l-.768-1.868c.53-.223.99-.463 1.364-.711 1.1-.734 1.804-1.779 1.804-2.175h2c0 .94-.621 1.947-1.417 2.775 1.192 1.04 1.48 2.078 1.48 2.817M17.142 48.39c.791.408 1.716.772 2.752 1.08l.564-1.94a14 14 0 0 1-2.406-.94zm2.752-11.05.564-1.94c-.916-.272-1.726-.589-2.406-.94l-.91 1.799c.791.41 1.716.772 2.752 1.08m-2.752-13.21.91-1.801c.68.352 1.49.668 2.406.94l-.564 1.94a16 16 0 0 1-2.752-1.08"/></g></symbol>
+<symbol id="i-bucket" viewBox="0 0 48 48"><path fill="#7aa116" fill-rule="evenodd" d="m40.504 26.16.224-1.666c1.784 1.087 2.335 1.715 2.495 1.98-.473.143-1.428.017-2.72-.314m-17.702-6.049c0-.053.043-.096.096-.096.015 0 .026.01.039.017l-.073.147c-.033-.01-.062-.03-.062-.068m13.712 20.687a1 1 0 0 0-.01.133c0 .155-.378.744-2.063 1.41-.751.296-1.638.562-2.638.792-2.575.596-5.74.924-8.907.924-8.466 0-13.607-2.17-13.607-3.126q0-.066-.01-.133L5.442 12.285q.372.215.79.415c.079.038.165.074.247.112a16 16 0 0 0 1.089.453q.413.156.856.3c.087.03.17.06.258.086a27 27 0 0 0 1.522.427 30 30 0 0 0 1.378.32q.548.116 1.117.22l.244.046q.688.12 1.403.224.201.028.406.054.54.075 1.093.14l.453.051q.666.07 1.343.13.08.006.162.013.756.06 1.519.104.217.011.436.021.576.029 1.152.047l.45.014q.77.018 1.537.02a72 72 0 0 0 1.987-.034q.577-.019 1.15-.047l.439-.02q.764-.044 1.518-.105l.166-.014q.675-.058 1.338-.129l.457-.052q.55-.065 1.089-.138.207-.027.41-.056a50 50 0 0 0 1.402-.223q.123-.022.247-.047a38 38 0 0 0 2.493-.539l.344-.086q.61-.163 1.178-.34c.087-.028.169-.057.254-.086a19 19 0 0 0 1.954-.756c.079-.037.163-.072.24-.109q.42-.2.792-.416l-1.792 13.306c-3.637-1.167-8.745-3.284-13.58-5.583a2.09 2.09 0 0 0-2.084-1.993 2.1 2.1 0 0 0-2.096 2.096c0 1.155.94 2.095 2.096 2.095.454 0 .872-.149 1.215-.396 4.332 2.08 9.863 4.532 14.18 5.778zM22.896 4c10.419 0 17.76 3.228 17.896 5.021l-.026.208c-.018.062-.057.125-.09.19-.027.051-.047.101-.084.154-.044.062-.11.125-.166.188-.051.055-.094.11-.155.166-.068.061-.155.124-.236.186-.075.058-.141.115-.227.174-.091.06-.2.122-.302.184-.1.06-.19.12-.301.178-.11.06-.24.118-.36.178-.124.061-.24.121-.376.182-.13.057-.276.114-.414.171-.15.06-.291.122-.451.181-.148.056-.314.11-.471.164-.171.06-.335.12-.517.177-.17.054-.355.104-.534.157-.19.056-.373.113-.573.167-.192.052-.4.1-.6.15-.206.051-.406.104-.623.154s-.448.094-.674.141c-.218.045-.43.093-.658.136-.24.046-.497.087-.747.13-.23.04-.453.081-.692.118-.26.04-.536.076-.806.113-.244.033-.482.07-.734.1-.293.036-.602.066-.905.097-.244.026-.48.055-.73.077-.336.031-.688.054-1.034.078-.233.018-.458.038-.696.053-.38.022-.776.036-1.17.053-.215.008-.425.021-.646.028a65 65 0 0 1-3.797 0c-.222-.007-.434-.02-.654-.029-.39-.016-.783-.03-1.161-.052-.25-.016-.488-.037-.733-.055-.333-.024-.673-.046-.996-.076-.251-.022-.487-.052-.732-.077-.303-.03-.612-.06-.904-.097-.25-.03-.487-.066-.73-.1-.27-.037-.548-.072-.81-.113-.247-.038-.48-.082-.718-.123-.241-.042-.488-.08-.72-.125-.231-.044-.446-.092-.67-.138-.222-.047-.45-.09-.663-.14-.216-.049-.415-.102-.622-.153-.2-.05-.408-.098-.6-.15-.202-.054-.387-.112-.58-.169-.176-.05-.36-.102-.526-.155-.185-.059-.351-.119-.524-.18-.155-.053-.318-.106-.463-.16-.162-.06-.303-.123-.453-.183-.138-.057-.285-.114-.413-.17-.134-.06-.251-.12-.375-.182-.121-.06-.251-.118-.361-.179-.11-.059-.202-.119-.302-.179-.101-.06-.21-.122-.3-.182-.087-.06-.155-.118-.231-.177-.08-.06-.165-.123-.231-.183-.063-.057-.107-.114-.16-.169-.055-.062-.118-.124-.162-.185-.038-.054-.057-.106-.085-.16-.032-.062-.071-.124-.088-.184l-.028-.209C5.14 7.227 12.48 4 22.896 4m22.359 22.257c-.213-1.15-1.538-2.368-4.237-3.91l1.716-12.752v-.004l.05-.39a1 1 0 0 0 .01-.13c0-4.167-10.486-7.07-19.898-7.07S3 4.903 3 9.07q0 .066.009.132l.052.39v.002L7.29 41.01c.13 3.676 9.613 5.048 15.606 5.048 3.315 0 6.638-.346 9.357-.975a21 21 0 0 0 2.922-.882c2.166-.855 3.285-1.929 3.329-3.19l1.74-12.93c.953.202 1.818.325 2.537.325.969 0 1.694-.205 2.086-.673.35-.416.488-.94.388-1.475"/></symbol>
+<symbol id="i-eb" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#e7157b" d="M0 0h64v64H0z"/><path fill="#fff" d="M43.262 52c-1.566 0-2.84-1.264-2.84-2.818s1.274-2.818 2.84-2.818 2.839 1.264 2.839 2.818S44.827 52 43.26 52m-6.718-13H28.4l-4.072-7 4.072-7h8.144l4.072 7zM22.746 17.636c-1.566 0-2.84-1.264-2.84-2.818S21.18 12 22.746 12s2.84 1.264 2.84 2.818-1.275 2.818-2.84 2.818m20.516 26.728c-.542 0-1.055.109-1.543.272l-3.103-5.198 4.036-6.938c.18-.31.18-.69 0-1l-4.654-8c-.18-.31-.512-.5-.873-.5h-8.324l-2.777-4.651c.963-.881 1.576-2.132 1.576-3.531 0-2.656-2.177-4.818-4.854-4.818s-4.855 2.162-4.855 4.818c0 2.657 2.177 4.818 4.855 4.818.542 0 1.055-.109 1.542-.272l2.566 4.295-4.561 7.841c-.18.31-.18.69 0 1l4.653 8c.18.31.512.5.873.5h9.306c.026 0 .05-.008.075-.01l2.783 4.661c-.962.881-1.575 2.132-1.575 3.531 0 2.656 2.177 4.818 4.854 4.818s4.854-2.162 4.854-4.818c0-2.657-2.177-4.818-4.854-4.818m4.672-18.728c-1.566 0-2.84-1.264-2.84-2.818S46.367 20 47.933 20c1.564 0 2.839 1.264 2.839 2.818s-1.275 2.818-2.84 2.818m3.045.903c1.094-.884 1.809-2.214 1.809-3.721 0-2.656-2.177-4.818-4.854-4.818a4.8 4.8 0 0 0-1.8.353l-2.73-3.921c-.189-.27-.499-.432-.83-.432h-9.067v2h8.54l2.41 3.466a4.78 4.78 0 0 0-1.379 3.352c0 2.657 2.178 4.818 4.856 4.818.434 0 .848-.075 1.25-.182L51.83 32l-3.85 6.616 1.746 1 4.139-7.116c.18-.31.18-.69 0-1zM17.71 43.636c-1.566 0-2.84-1.264-2.84-2.818S16.142 38 17.708 38c1.564 0 2.839 1.264 2.839 2.818s-1.275 2.818-2.84 2.818m2.913 1.011c1.17-.88 1.94-2.261 1.94-3.829 0-2.656-2.177-4.818-4.854-4.818-.7 0-1.364.155-1.965.421L13.17 32l4.472-7.689-1.745-1-4.763 8.189c-.18.31-.18.69 0 1l2.974 5.114c-.771.854-1.256 1.969-1.256 3.204 0 2.657 2.178 4.818 4.855 4.818.368 0 .723-.048 1.066-.125l2.821 4.057c.189.27.498.432.83.432h9.067v-2h-8.537z"/></g></symbol>
+<symbol id="i-cw" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#e7157b" d="M0 0h64v64H0z"/><path fill="#fff" d="M42.184 39.381a4.095 4.095 0 0 0-8.189 0 4.095 4.095 0 0 0 8.189 0m2 0c0 3.353-2.734 6.081-6.095 6.081s-6.094-2.728-6.094-6.08c0-3.354 2.734-6.082 6.094-6.082s6.095 2.728 6.095 6.081m6.559 10.235-4.897-4.4a10 10 0 0 1-1.061 1.19l4.886 4.397a.806.806 0 0 0 1.131-.059.8.8 0 0 0-.059-1.128m-12.654-2.524c4.262 0 7.729-3.46 7.729-7.71 0-4.252-3.467-7.711-7.729-7.711-4.26 0-7.727 3.459-7.727 7.71s3.467 7.71 7.727 7.71m13.992 1.042a2.796 2.796 0 0 1 .207 3.946c-.553.61-1.317.92-2.083.92a2.8 2.8 0 0 1-1.872-.713l-5.161-4.646a9.67 9.67 0 0 1-5.083 1.446c-5.364 0-9.727-4.354-9.727-9.706s4.363-9.706 9.727-9.706c5.365 0 9.729 4.354 9.729 9.706a9.6 9.6 0 0 1-.921 4.095zM17.697 23.538c0 .401.023.8.07 1.185a.997.997 0 0 1-.806 1.101C15.084 26.308 12 27.772 12 32.157c0 3.323 1.836 5.157 3.377 6.11.672.423 1.263.638 1.761.643h8.989v1.996h-9c-.884-.01-1.827-.329-2.81-.947C12.708 38.964 10 36.62 10 32.157c0-5.27 3.526-7.293 5.71-8.04a14 14 0 0 1-.013-.579c0-4.378 2.976-8.916 6.924-10.56 4.611-1.927 9.498-.971 13.066 2.556 1.047 1.033 1.917 2.274 2.598 3.702a5.3 5.3 0 0 1 3.174-1.061c2.415 0 5.128 1.793 5.663 5.715C50.58 24.722 54 27.278 54 32.217c0 2.89-1.136 5.24-3.287 6.792l-1.172-1.616C51.173 36.214 52 34.473 52 32.217c0-4.978-4.189-6.217-5.99-6.519a.996.996 0 0 1-.824-1.127c-.255-3.04-2.045-4.401-3.727-4.401-1.057 0-2.05.516-2.725 1.416a.999.999 0 0 1-1.741-.26c-.634-1.752-1.547-3.223-2.712-4.375-1.43-1.411-5.348-4.444-10.89-2.132-3.193 1.33-5.694 5.16-5.694 8.72"/></g></symbol>
+<symbol id="i-iam" viewBox="0 0 64 64"><g fill="none" fill-rule="evenodd"><path fill="#dd344c" d="M0 0h64v64H0z"/><path fill="#fff" d="M12 47h40V18H12zm42-30v31a1 1 0 0 1-1 1H11a1 1 0 0 1-1-1V17a1 1 0 0 1 1-1h42a1 1 0 0 1 1 1M35 39h12v-2H35zm10-4h4v-2h-4zm-10 0h6v-2h-6zm-12.5 2.5a.5.5 0 1 0 1.002-.002.5.5 0 0 0-1.002.002m3 0a2.5 2.5 0 0 1-1.5 2.288V42h-2v-2.212a2.5 2.5 0 0 1-1.5-2.288c0-1.378 1.121-2.5 2.5-2.5s2.5 1.122 2.5 2.5M16 42.995 29.995 43l.001-2H27v-2h2.997l.001-2H27v-2h2.999L30 33.005 16.005 33zm2-11.994 10.001.003.001-5.004c0-1.024-.802-1.727-1.28-2.055-.875-.6-2.548-.945-3.72-.945H23c-2.127 0-4.997 1.232-4.998 3zm-3.707 13.7a1 1 0 0 1-.293-.707L14.005 32a1 1 0 0 1 1-1H16l.002-5c.001-3.089 3.874-5 6.998-5h.002c1.565 0 3.651.473 4.852 1.295 1.385.951 2.149 2.267 2.148 3.705l-.001 5.005.999.001a1 1 0 0 1 1 1L31.995 44a1 1 0 0 1-1 1L15 44.994a1 1 0 0 1-.707-.293M47 30h2v-2h-2zm-12 0h9v-2h-9z"/></g></symbol>
+<symbol id="i-users" viewBox="0 0 48 48"><path fill="currentColor" fill-rule="evenodd" d="M28.639 9.286c0-2.915 2.413-5.286 5.38-5.286s5.378 2.371 5.378 5.286-2.412 5.286-5.378 5.286-5.38-2.371-5.38-5.286m11.524 7.048a11.7 11.7 0 0 0-2.035-1.001c1.97-1.31 3.269-3.531 3.269-6.047 0-4.017-3.31-7.286-7.378-7.286-4.069 0-7.38 3.269-7.38 7.286 0 2.51 1.293 4.728 3.256 6.039a11.9 11.9 0 0 0-3.546 2.1l1.303 1.518A9.77 9.77 0 0 1 34 16.572c1.802 0 3.569.505 5.109 1.461 2.74 1.702 4.538 4.692 4.844 7.967H34v2h11a1 1 0 0 0 1-1c0-4.343-2.236-8.43-5.837-10.666M8.639 9.286C8.639 6.371 11.052 4 14.019 4s5.378 2.371 5.378 5.286-2.412 5.286-5.378 5.286-5.38-2.371-5.38-5.286M14 26H4.046C4.53 20.717 8.81 16.572 14 16.572c1.802 0 3.569.505 5.109 1.461.432.269.849.575 1.24.91l1.303-1.517a11.71 11.71 0 0 0-3.524-2.093c1.97-1.31 3.269-3.531 3.269-6.047 0-4.017-3.31-7.286-7.378-7.286-4.069 0-7.38 3.269-7.38 7.286 0 2.515 1.298 4.737 3.268 6.046C5.302 17.071 2 21.638 2 27a1 1 0 0 0 1 1h11zm.046 18c.484-5.283 4.764-9.428 9.954-9.428 1.802 0 3.569.505 5.109 1.461 2.74 1.702 4.538 4.692 4.844 7.967zm4.593-16.714c0-2.915 2.413-5.286 5.38-5.286s5.378 2.371 5.378 5.286-2.412 5.286-5.378 5.286-5.38-2.371-5.38-5.286m11.524 7.048a11.7 11.7 0 0 0-2.035-1.001c1.97-1.31 3.269-3.531 3.269-6.047 0-4.017-3.31-7.286-7.378-7.286-4.069 0-7.38 3.269-7.38 7.286 0 2.515 1.298 4.737 3.268 6.046C15.302 35.071 12 39.638 12 45a1 1 0 0 0 1 1h22a1 1 0 0 0 1-1c0-4.343-2.236-8.43-5.837-10.666"/></symbol>
+<symbol id="i-client" viewBox="0 0 48 48"><path fill="currentColor" fill-rule="evenodd" d="M42.299 38.773v1.923a.793.793 0 0 1-.793.794H30.762a.794.794 0 0 1-.794-.794v-1.923c0-.438.355-.793.794-.793h10.744c.439 0 .793.355.793.793m1.498 3.626a.646.646 0 0 1-.644.645H4.645A.646.646 0 0 1 4 42.399v-5.388c0-.355.289-.644.645-.644h38.508c.355 0 .644.289.644.644zm-.644-8.032H4.645A2.65 2.65 0 0 0 2 37.011v5.388a2.65 2.65 0 0 0 2.645 2.645h38.508a2.65 2.65 0 0 0 2.644-2.645v-5.388a2.647 2.647 0 0 0-2.644-2.644M7.501 27.21h32.763V7.502H7.501zM40.842 5.502H6.924c-.784 0-1.423.637-1.423 1.421v20.865c0 .784.639 1.422 1.423 1.422h33.918c.784 0 1.422-.638 1.422-1.422V6.923c0-.784-.638-1.421-1.422-1.421m2.955 24.565a.645.645 0 0 1-.644.644H4.645A.645.645 0 0 1 4 30.067V4.644C4 4.289 4.289 4 4.645 4h38.508c.355 0 .644.289.644.644zM43.153 2H4.645A2.65 2.65 0 0 0 2 4.644v25.423a2.65 2.65 0 0 0 2.645 2.644h38.508a2.647 2.647 0 0 0 2.644-2.644V4.644A2.647 2.647 0 0 0 43.153 2"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 40 40"><g fill="none" fill-rule="evenodd"><path fill="#242f3e" d="M0 0h40v40H0z"/><path fill="#fff" d="M32.698 23.9c.361.47-.4 2.4-.74 3.264-.105.262.117.365.35.168 1.512-1.284 1.904-3.975 1.593-4.363-.307-.386-2.95-.717-4.563.432-.249.177-.206.42.07.389.907-.112 2.93-.357 3.29.11m-.842 2.01c.518-.378.074-.941-.454-.72-3.513 1.464-7.327 2.173-10.8 2.173-5.143 0-10.127-1.39-14.156-3.695-.352-.202-.613.155-.319.414 3.733 3.316 8.67 5.309 14.147 5.309 3.91 0 8.451-1.208 11.582-3.481m-2.144-5.215a6.6 6.6 0 0 1-1.459-.161q-.714-.163-1.093-.373-.233-.128-.29-.258a.7.7 0 0 1-.059-.26v-.47q0-.29.216-.292.083.002.173.033.091.034.241.098.48.21 1.044.324.564.113 1.126.113.895 0 1.384-.308a.97.97 0 0 0 .49-.873.88.88 0 0 0-.258-.65q-.256-.258-.952-.484l-1.375-.421q-1.045-.325-1.517-.938a2.17 2.17 0 0 1-.472-1.347q0-.581.258-1.027.255-.445.676-.761.427-.314.99-.478A4.3 4.3 0 0 1 30.025 12q.315 0 .64.04a6.3 6.3 0 0 1 1.15.252q.248.082.4.162a.9.9 0 0 1 .28.227.5.5 0 0 1 .083.308v.436q0 .291-.217.29-.114.002-.364-.111c-.54-.24-1.15-.356-1.82-.356q-.815 0-1.262.258-.448.26-.448.827 0 .388.283.655.281.267 1.044.51l1.342.423q1.028.322 1.466.888.441.568.441 1.295 0 .6-.25 1.078-.248.477-.689.817a3.1 3.1 0 0 1-1.05.518q-.615.179-1.343.178m-12.165-.244q-.248.002-.365-.087-.117-.09-.199-.365l-2.222-7.157a1.8 1.8 0 0 1-.082-.371q0-.227.233-.227h.927q.265 0 .374.09.106.086.19.364l1.59 6.12 1.477-6.12q.066-.278.181-.364.116-.09.38-.09h.765q.263 0 .38.09.116.086.182.364l1.493 6.2 1.64-6.2q.082-.278.19-.364.109-.09.373-.09h.878q.233 0 .233.227a1 1 0 0 1-.016.144 2 2 0 0 1-.068.227l-2.286 7.157q-.083.275-.2.365-.116.088-.364.087h-.813q-.264.001-.38-.094-.116-.099-.182-.373l-1.476-5.96-1.457 5.96q-.067.274-.183.373-.116.095-.38.094zM9.94 19.449q.465 0 .98-.17.513-.17.893-.592.232-.259.324-.591.09-.33.09-.801v-.388a8 8 0 0 0-1.757-.211q-.945 0-1.408.373-.464.37-.465 1.07 0 .645.35.978.347.332.993.332m3.846-1.408q0 .517.107.825.11.31.307.664a.4.4 0 0 1 .066.209q0 .148-.182.276l-.597.39a.5.5 0 0 1-.248.08.4.4 0 0 1-.282-.128 2 2 0 0 1-.339-.43 6 6 0 0 1-.29-.544q-1.112 1.28-2.785 1.28-1.194.001-1.89-.664-.696-.664-.696-1.78 0-1.182.863-1.903.86-.72 2.32-.721.48 0 1.002.073t1.084.203v-.68q.001-1.052-.446-1.482-.446-.428-1.54-.428a4.5 4.5 0 0 0-1.02.12 7.5 7.5 0 0 0-1.02.315 3 3 0 0 1-.33.122.7.7 0 0 1-.15.024q-.199.001-.2-.292v-.452q.001-.228.068-.323.066-.099.265-.195a6 6 0 0 1 1.192-.421 6 6 0 0 1 1.476-.18c1.126 0 1.952.254 2.477.754q.787.753.788 2.275z"/></g></symbol>
+<symbol id="i-region" viewBox="0 0 40 40"><g fill="none" fill-rule="evenodd"><path fill="#00a4a6" d="M0 0h40v40H0z"/><path fill="#fff" d="M14 20.026v-9h15.293l-4.147 4.146a.5.5 0 0 0 0 .708l4.147 4.146zm12.207-4.5 4.647-4.646a.5.5 0 0 0-.354-.854H14V8.97A1.528 1.528 0 0 0 13.495 6c-.845 0-1.532.687-1.532 1.531 0 .67.435 1.235 1.037 1.442v24.053h-3v1h7v-1h-3v-12h16.5a.5.5 0 0 0 .354-.854z"/></g></symbol>
+<marker id="m-req" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--req)"/></marker>
+<marker id="m-ops" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ops)"/></marker>
+</defs>
+<rect x="170" y="20" width="1010" height="584" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+<use href="#i-cloud" x="170" y="20" width="32" height="32"/><text class="t-group" x="210" y="41">AWS Cloud</text>
+<rect x="190" y="64" width="970" height="524" fill="none" stroke="var(--region)" stroke-width="1.5" stroke-dasharray="7 5"/>
+<use href="#i-region" x="190" y="64" width="28" height="28"/><text class="t-group" x="226" y="83">Région eu-west-3</text><text class="t-group-sub" x="346" y="83">Paris · aucun VPC, aucun serveur</text>
+
+<rect x="425" y="98" width="230" height="452" fill="var(--ecs-fill)" stroke="var(--ecs)" stroke-dasharray="6 4" rx="4"/>
+<use href="#i-lambda" x="425" y="98" width="24" height="24"/><text class="t-group" x="456" y="115">AWS Lambda</text>
+<rect class="fncard" x="440" y="132" width="200" height="76" rx="6"/>
+<use href="#i-fn" x="452" y="150" width="40" height="40"/>
+<text class="t-name" x="502" y="156">commandes-api</text>
+<text class="t-detail" x="502" y="173">Python 3.13 · arm64</text>
+<text class="t-detail" x="502" y="188">alias prod · canary</text>
+<rect class="fncard" x="440" y="292" width="200" height="76" rx="6"/>
+<use href="#i-fn" x="452" y="310" width="40" height="40"/>
+<text class="t-name" x="502" y="316">commandes-import</text>
+<text class="t-detail" x="502" y="333">256 Mo · 15 s</text>
+<text class="t-detail" x="502" y="348">lignes invalides rejetées</text>
+<rect class="fncard" x="440" y="452" width="200" height="76" rx="6"/>
+<use href="#i-fn" x="452" y="470" width="40" height="40"/>
+<text class="t-name" x="502" y="476">commandes-rapport</text>
+<text class="t-detail" x="502" y="493">256 Mo · 15 s</text>
+<text class="t-detail" x="502" y="508">CA · top produits</text>
+
+<use href="#i-apigw" x="250" y="146" width="48" height="48"/>
+<text class="t-name" x="274" y="212" text-anchor="middle">API Gateway</text><text class="t-detail" x="274" y="227" text-anchor="middle">API HTTP · 4 routes</text>
+<use href="#i-bucket" x="250" y="306" width="48" height="48"/>
+<text class="t-name" x="274" y="372" text-anchor="middle">S3 imports/</text><text class="t-detail" x="274" y="387" text-anchor="middle">*.csv</text>
+<use href="#i-eb" x="250" y="466" width="48" height="48"/>
+<text class="t-name" x="274" y="532" text-anchor="middle">EventBridge</text><text class="t-detail" x="274" y="547" text-anchor="middle">rate(5 minutes)</text>
+
+<use href="#i-ddb" x="776" y="306" width="48" height="48"/>
+<text class="t-name" x="832" y="326">DynamoDB</text><text class="t-detail" x="832" y="341">demo-commandes</text>
+<use href="#i-bucket" x="776" y="516" width="48" height="48"/>
+<text class="t-name" x="832" y="536">S3 rapports/</text><text class="t-detail" x="832" y="551">*.json</text>
+
+<rect class="card" x="950" y="110" width="200" height="86" rx="6"/>
+<use href="#i-cw" x="962" y="133" width="40" height="40"/>
+<text class="t-name" x="1012" y="138">CloudWatch</text>
+<text class="t-detail" x="1012" y="156">logs par fonction</text>
+<text class="t-detail" x="1012" y="172">métriques, erreurs</text>
+<rect class="card" x="950" y="214" width="200" height="86" rx="6"/>
+<use href="#i-iam" x="962" y="237" width="40" height="40"/>
+<text class="t-name" x="1012" y="242">IAM</text>
+<text class="t-detail" x="1012" y="260">1 rôle par fonction</text>
+<text class="t-detail" x="1012" y="276">moindre privilège</text>
+<rect class="card" x="950" y="318" width="200" height="86" rx="6"/>
+<use href="#i-fn" x="962" y="341" width="40" height="40"/>
+<text class="t-name" x="1012" y="346">Versions, alias</text>
+<text class="t-detail" x="1012" y="364">canary 70 / 30</text>
+<text class="t-detail" x="1012" y="380">retour arrière</text>
+<rect class="card" x="950" y="422" width="200" height="86" rx="6"/>
+<text class="t-name" x="964" y="450">Facturation</text>
+<text class="t-detail" x="964" y="468">à la milliseconde</text>
+<text class="t-detail" x="964" y="484">0 € au repos</text>
+
+<use href="#i-users" x="61" y="146" width="48" height="48" style="color:var(--fg)"/>
+<text class="t-name" x="85" y="212" text-anchor="middle">Navigateur</text><text class="t-detail" x="85" y="227" text-anchor="middle">ou curl</text>
+<use href="#i-client" x="61" y="306" width="48" height="48" style="color:var(--fg)"/>
+<text class="t-name" x="85" y="372" text-anchor="middle">Fichier CSV</text><text class="t-detail" x="85" y="387" text-anchor="middle">console ou aws s3 cp</text>
+
+<path class="req-line" d="M112,170 H246" marker-end="url(#m-req)"/><rect class="edge-bg" x="157.5" y="151" width="45" height="15" rx="2"/><text class="t-edge req" x="180" y="162" text-anchor="middle">HTTPS</text>
+<path class="req-line" d="M300,170 H436" marker-end="url(#m-req)"/><rect class="edge-bg" x="331.5" y="151" width="73" height="15" rx="2"/><text class="t-edge req" x="368" y="162" text-anchor="middle">synchrone</text>
+<path class="req-line" d="M112,330 H246" marker-end="url(#m-req)"/><rect class="edge-bg" x="157.5" y="311" width="45" height="15" rx="2"/><text class="t-edge req" x="180" y="322" text-anchor="middle">dépôt</text>
+<path class="req-line" d="M300,330 H436" marker-end="url(#m-req)"/><rect class="edge-bg" x="328.0" y="311" width="80" height="15" rx="2"/><text class="t-edge req" x="368" y="322" text-anchor="middle">asynchrone</text>
+<path class="req-line" d="M300,490 H436" marker-end="url(#m-req)"/><rect class="edge-bg" x="335.0" y="471" width="66" height="15" rx="2"/><text class="t-edge req" x="368" y="482" text-anchor="middle">planifié</text>
+<path class="req-line" d="M640,170 H800 V302" marker-end="url(#m-req)"/><rect class="edge-bg" x="661.0" y="151" width="118" height="15" rx="2"/><text class="t-edge req" x="720" y="162" text-anchor="middle">Put · Get · Scan</text>
+<path class="req-line" d="M640,330 H772" marker-end="url(#m-req)"/><rect class="edge-bg" x="666.0" y="311" width="80" height="15" rx="2"/><text class="t-edge req" x="706" y="322" text-anchor="middle">BatchWrite</text>
+<path class="req-line" d="M640,476 H800 V358" marker-end="url(#m-req)"/><rect class="edge-bg" x="700.0" y="457" width="40" height="15" rx="2"/><text class="t-edge req" x="720" y="468" text-anchor="middle">Scan</text>
+<path class="req-line" d="M640,506 H700 V540 H772" marker-end="url(#m-req)"/><rect class="edge-bg" x="700.0" y="521" width="72" height="15" rx="2"/><text class="t-edge req" x="736" y="532" text-anchor="middle">PutObject</text>
+</svg>
+    <div class="legend">
+      <span><i></i> invocations et accès aux données</span>
+      <span>Icônes : AWS Architecture Icons</span>
+    </div>
+  </figure>
+
+  <div class="cols">
+    <section>
+      <h2>Trois déclencheurs, trois comportements</h2>
+      <div class="table-wrap">
+        <table class="qf">
+          <thead><tr><th>Déclencheur</th><th>Mode</th><th>En cas d'erreur</th></tr></thead>
+          <tbody>
+            <tr><td>API Gateway</td><td>synchrone</td><td>l'erreur est renvoyée tout de suite au client</td></tr>
+            <tr><td>S3</td><td>asynchrone</td><td>Lambda réessaie 2 fois</td></tr>
+            <tr><td>EventBridge</td><td>asynchrone</td><td>Lambda réessaie 2 fois</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Mesuré pendant le test</h2>
+      <div class="table-wrap">
+        <table class="qf">
+          <thead><tr><th>Observation</th><th>Résultat</th></tr></thead>
+          <tbody>
+            <tr><td>Démarrage à froid</td><td class="num">510 ms init + 250 ms</td></tr>
+            <tr><td>Exécution à chaud</td><td class="num">≈ 145 ms</td></tr>
+            <tr><td>Import des 2 CSV</td><td class="num">8 importées · 3 rejetées</td></tr>
+            <tr><td>Canary 70/30</td><td class="num">44 × v1 · 16 × v2</td></tr>
+            <tr><td>Concurrence à 0</td><td class="num">HTTP 503</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Déroulé de la démo</h2>
+      <ol class="flow">
+        <li><div><strong>Construire dans la console</strong><span>table, bucket, 3 fonctions, rôles, déclencheurs</span></div></li>
+        <li><div><strong>Créer des commandes</strong><span>page web et API, validation 400</span></div></li>
+        <li><div><strong>Déposer les CSV</strong><span>traitement en parallèle, lignes rejetées dans les logs</span></div></li>
+        <li><div><strong>Lire le rapport</strong><span>généré toutes les 5 minutes dans S3</span></div></li>
+        <li><div><strong>Exploiter en CLI</strong><span>versions, alias, canary, retour arrière, coupure d'urgence</span></div></li>
+      </ol>
+    </section>
+  </div>
+
+  <div class="foot">
+    <span>Coût : quasi nul, couvert par l'offre gratuite</span>
+    <span>Guide pas à pas : GUIDE.md (console + AWS CLI)</span>
+  </div>
+</div>
