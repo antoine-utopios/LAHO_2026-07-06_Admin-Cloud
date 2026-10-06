@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:fragment="head(titre)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titre} + ' — Produits'">Produits</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:inline="css">
+        :root { --accent: [(${couleur})]; }
+    </style>
+</head>
+<body>
+
+<header th:fragment="entete" class="entete">
+    <a th:href="@{/produits}" class="logo">📦 Gestion des produits</a>
+    <span class="badge" th:text="'v' + ${version}">vdev</span>
+</header>
+
+<footer th:fragment="pied" class="pied">
+    <div><strong>Conteneur :</strong> <span th:text="${conteneur}">hostname</span></div>
+    <div><strong>Base de données :</strong> <span th:text="${dbHost}">localhost</span></div>
+    <div><strong>Version :</strong> <span th:text="${version}">dev</span></div>
+</footer>
+
+</body>
+</html>

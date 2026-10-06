@@ -1,0 +1,25 @@
+# Test en local avant de déployer sur AWS :  docker compose up --build  →  http://localhost:8080
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: produits
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_NAME: produits
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      APP_VERSION: "1.0-local"
+    depends_on:
+      db:
+        condition: service_healthy

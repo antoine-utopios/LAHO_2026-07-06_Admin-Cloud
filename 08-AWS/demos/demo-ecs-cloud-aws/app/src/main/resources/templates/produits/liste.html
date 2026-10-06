@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head th:replace="~{fragments :: head('Liste')}"></head>
+<body>
+<header th:replace="~{fragments :: entete}"></header>
+
+<main class="contenu">
+    <div class="titre">
+        <h1>Produits <small th:text="'(' + ${#lists.size(produits)} + ')'">(0)</small></h1>
+        <a class="bouton" th:href="@{/produits/nouveau}">+ Nouveau produit</a>
+    </div>
+
+    <p class="message" th:if="${message}" th:text="${message}">Message</p>
+
+    <table th:if="${!#lists.isEmpty(produits)}">
+        <thead>
+        <tr><th>#</th><th>Nom</th><th>Description</th><th class="nombre">Prix</th><th class="nombre">Stock</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${produits}">
+            <td th:text="${p.id}">1</td>
+            <td th:text="${p.nom}">Nom</td>
+            <td th:text="${p.description}">Description</td>
+            <td class="nombre" th:text="${#numbers.formatDecimal(p.prix, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'">0,00 €</td>
+            <td class="nombre" th:text="${p.quantite}">0</td>
+            <td class="actions">
+                <a th:href="@{/produits/{id}/modifier(id=${p.id})}">Modifier</a>
+                <form th:action="@{/produits/{id}/supprimer(id=${p.id})}" method="post"
+                      onsubmit="return confirm('Supprimer ce produit ?')">
+                    <button type="submit" class="lien-danger">Supprimer</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p th:if="${#lists.isEmpty(produits)}" class="vide">Aucun produit pour le moment.</p>
+</main>
+
+<footer th:replace="~{fragments :: pied}"></footer>
+</body>
+</html>

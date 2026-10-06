@@ -1,0 +1,26 @@
+* { box-sizing: border-box; }
+:root { --accent: #2563eb; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f5f6f8; color: #1f2937; }
+.entete { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; background: var(--accent, #2563eb); color: #fff; }
+.logo { color: #fff; text-decoration: none; font-weight: 600; font-size: 1.15rem; }
+.badge { background: rgba(255,255,255,.2); padding: 4px 10px; border-radius: 999px; font-size: .85rem; }
+.contenu { max-width: 960px; margin: 32px auto; padding: 0 16px; }
+.titre { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+h1 small { color: #6b7280; font-weight: 400; font-size: 1rem; }
+.bouton { display: inline-block; background: var(--accent, #2563eb); color: #fff; border: 0; padding: 9px 16px; border-radius: 6px; text-decoration: none; font-size: .95rem; cursor: pointer; }
+.message { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 14px; border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+th { background: #f9fafb; font-size: .85rem; text-transform: uppercase; color: #6b7280; }
+.nombre { text-align: right; font-variant-numeric: tabular-nums; }
+.actions { display: flex; gap: 12px; justify-content: flex-end; align-items: center; }
+.actions a { color: var(--accent, #2563eb); }
+.actions form { margin: 0; }
+.lien-danger { background: none; border: 0; color: #dc2626; cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
+.formulaire { display: grid; gap: 16px; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); max-width: 520px; }
+.formulaire label { display: grid; gap: 6px; font-weight: 500; }
+.formulaire input { padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+.erreur { color: #dc2626; font-size: .85rem; font-weight: 400; }
+.boutons { display: flex; gap: 16px; align-items: center; }
+.vide { color: #6b7280; }
+.pied { max-width: 960px; margin: 40px auto; padding: 14px 16px; display: flex; gap: 24px; flex-wrap: wrap; font-size: .85rem; color: #4b5563; border-top: 1px solid #e5e7eb; }
