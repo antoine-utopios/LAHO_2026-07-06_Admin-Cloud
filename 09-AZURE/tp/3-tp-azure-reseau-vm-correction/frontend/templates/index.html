@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TP Azure 3-tiers</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #14212e;
+      --muted: #6b7785;
+      --line: #e6ebf1;
+      --azure: #0078d4;
+      --azure-dark: #0057a0;
+      --ok: #13a10e;
+      --ok-bg: #e8f6e7;
+      --ko: #d13438;
+      --ko-bg: #fdecec;
+      --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 6px 20px rgba(16, 24, 40, .06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1720;
+        --card: #18222d;
+        --text: #e6edf3;
+        --muted: #8b98a5;
+        --line: #26323f;
+        --ok-bg: #12301a;
+        --ko-bg: #3a1618;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.45;
+    }
+
+    /* ---------- En-tête ---------- */
+    .hero {
+      background: linear-gradient(135deg, #0078d4 0%, #0057a0 55%, #3b2a8f 100%);
+      color: #fff;
+      padding: 40px 16px 96px;
+    }
+    .hero-inner, main { max-width: 760px; margin: 0 auto; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255, 255, 255, .16);
+      border: 1px solid rgba(255, 255, 255, .25);
+      padding: 4px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; letter-spacing: .3px;
+    }
+    .hero h1 { margin: 14px 0 6px; font-size: 32px; letter-spacing: -.5px; }
+    .hero p { margin: 0; opacity: .85; }
+
+    main { padding: 0 16px 48px; margin-top: -64px; }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .card-title {
+      margin: 0 0 16px; font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+    }
+
+    /* ---------- Chaîne des 3 tiers ---------- */
+    .pipeline { display: flex; align-items: stretch; gap: 8px; }
+    .tier {
+      flex: 1; min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      position: relative;
+    }
+    .tier .icon { font-size: 22px; }
+    .tier .name { font-weight: 700; margin-top: 6px; }
+    .tier .host {
+      font-size: 12px; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .status {
+      position: absolute; top: 12px; right: 12px;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+    }
+    .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .status.ok { color: var(--ok); background: var(--ok-bg); }
+    .status.ko { color: var(--ko); background: var(--ko-bg); }
+    .status.ok::before { animation: pulse 2s infinite; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .arrow { align-self: center; color: var(--muted); font-size: 18px; }
+
+    .alert {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: var(--ko-bg); color: var(--ko);
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; font-size: 14px;
+    }
+
+    /* ---------- Statistiques ---------- */
+    .stats { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .stats strong { font-size: 22px; }
+    .stats span { color: var(--muted); font-size: 14px; }
+    .progress { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin-bottom: 20px; }
+    .progress div { height: 100%; background: linear-gradient(90deg, var(--azure), #3b2a8f); border-radius: 999px; transition: width .4s; }
+
+    /* ---------- Formulaire ---------- */
+    form.add { display: flex; gap: 10px; margin-bottom: 8px; }
+    form.add input {
+      flex: 1; min-width: 0;
+      padding: 12px 14px; font-size: 15px;
+      border: 1.5px solid var(--line); border-radius: 10px;
+      background: var(--bg); color: var(--text);
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    form.add input:focus { border-color: var(--azure); box-shadow: 0 0 0 4px rgba(0, 120, 212, .15); }
+    form.add button {
+      padding: 12px 18px; font-size: 15px; font-weight: 600;
+      border: 0; border-radius: 10px; cursor: pointer;
+      background: var(--azure); color: #fff; transition: background .15s, transform .05s;
+    }
+    form.add button:hover { background: var(--azure-dark); }
+    form.add button:active { transform: scale(.98); }
+
+    /* ---------- Liste ---------- */
+    ul { list-style: none; padding: 0; margin: 0; }
+    li.task {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 6px; border-bottom: 1px solid var(--line);
+      border-radius: 8px; transition: background .15s;
+    }
+    li.task:last-child { border-bottom: 0; }
+    li.task:hover { background: var(--bg); }
+    li.task form { margin: 0; display: flex; }
+    .check {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid #b4c0cc; background: transparent;
+      cursor: pointer; display: grid; place-items: center;
+      color: #fff; font-size: 13px; padding: 0; transition: all .15s;
+    }
+    .check:hover { border-color: var(--azure); }
+    li.done .check { background: var(--ok); border-color: var(--ok); }
+    .title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+    li.done .title { text-decoration: line-through; color: var(--muted); }
+    .date { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .delete {
+      border: 0; background: transparent; color: var(--muted);
+      cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px;
+      opacity: 0; transition: opacity .15s, background .15s, color .15s;
+    }
+    li.task:hover .delete, .delete:focus { opacity: 1; }
+    .delete:hover { background: var(--ko-bg); color: var(--ko); }
+    @media (hover: none) { .delete { opacity: 1; } }
+
+    .empty { text-align: center; padding: 32px 0 16px; color: var(--muted); }
+    .empty div { font-size: 36px; margin-bottom: 6px; }
+
+    footer { text-align: center; color: var(--muted); font-size: 12px; }
+    footer code { background: var(--card); padding: 2px 6px; border-radius: 4px; }
+
+    @media (max-width: 560px) {
+      .hero h1 { font-size: 26px; }
+      .pipeline { flex-direction: column; }
+      .arrow { transform: rotate(90deg); }
+      .date { display: none; }
+    }
+  </style>
+</head>
+<body>
+  {% set api_ok = health.get('host') is not none %}
+  {% set db_ok = health.get('database') == 'up' %}
+  {% set done_count = tasks | selectattr('done') | list | length %}
+  {% set total = tasks | length %}
+
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="badge">☁️ TP Azure · Architecture 3-tiers</span>
+      <h1>Mes tâches</h1>
+      <p>Front Python → API Python → MySQL, chacun dans sa VM et son sous-réseau.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2 class="card-title">État de l'infrastructure</h2>
+      <div class="pipeline">
+        <div class="tier">
+          <span class="status ok">UP</span>
+          <div class="icon">🖥️</div>
+          <div class="name">Front</div>
+          <div class="host" title="{{ front_host }}">{{ front_host }}</div>
+        </div>
+        <div class="arrow">➜</div>
+        <div class="tier">
+          <span class="status {{ 'ok' if api_ok else 'ko' }}">{{ 'UP' if api_ok else 'DOWN' }}</span>
+          <div class="icon">⚙️</div>
+          <div class="name">API</div>
+          <div class="host" title="{{ health.get('host', 'injoignable') }}">{{ health.get('host', 'injoignable') }}</div>
+        </div>
+        <div class="arrow">➜</div>
+        <div class="tier">
+          <span class="status {{ 'ok' if db_ok else 'ko' }}">{{ 'UP' if db_ok else 'DOWN' }}</span>
+          <div class="icon">🗄️</div>
+          <div class="name">MySQL</div>
+          <div class="host">{{ 'connectée' if db_ok else 'indisponible' }}</div>
+        </div>
+      </div>
+    </section>
+
+    {% if error %}
+    <div class="alert"><span>⚠️</span><div>{{ error }}</div></div>
+    {% endif %}
+
+    <section class="card">
+      <div class="stats">
+        <strong>{{ done_count }} / {{ total }}</strong>
+        <span>{{ ((done_count / total * 100) | round | int) if total else 0 }} % terminées</span>
+      </div>
+      <div class="progress"><div style="width: {{ (done_count / total * 100) if total else 0 }}%"></div></div>
+
+      <form class="add" method="post" action="/tasks">
+        <input type="text" name="title" placeholder="Ajouter une tâche…" maxlength="255" required autofocus>
+        <button type="submit">Ajouter</button>
+      </form>
+
+      <ul>
+        {% for t in tasks %}
+        <li class="task {{ 'done' if t.done else '' }}">
+          <form method="post" action="/tasks/{{ t.id }}/toggle">
+            <button class="check" title="{{ 'Marquer à faire' if t.done else 'Marquer terminée' }}">{{ '✓' if t.done else '' }}</button>
+          </form>
+          <span class="title">{{ t.title }}</span>
+          <span class="date">{{ t.created_at[:10] }}</span>
+          <form method="post" action="/tasks/{{ t.id }}/delete">
+            <button class="delete" title="Supprimer">✕</button>
+          </form>
+        </li>
+        {% else %}
+        <li class="empty"><div>🎉</div>Aucune tâche pour l'instant.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <footer>API appelée côté serveur : <code>{{ backend_url }}</code></footer>
+  </main>
+</body>
+</html>

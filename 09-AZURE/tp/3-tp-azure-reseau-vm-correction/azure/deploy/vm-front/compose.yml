@@ -1,0 +1,11 @@
+# VM vm-front (10.0.1.4) — sous-réseau snet-front, seule VM avec IP publique
+# Lancé depuis la racine du projet (dossier contenant frontend/)
+services:
+  frontend:
+    build: ./frontend
+    container_name: tp-frontend
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://10.0.2.4:5000   # IP privée de vm-back
+    ports:
+      - "80:8080"

@@ -1,0 +1,15 @@
+# VM vm-back (10.0.2.4) — sous-réseau snet-back
+# Lancé depuis la racine du projet (dossier contenant backend/ et .env)
+services:
+  backend:
+    build: ./backend
+    container_name: tp-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: 10.0.3.4          # IP privée de vm-db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5000:5000"   # filtré par le NSG : seul snet-front (10.0.1.0/24) est autorisé

@@ -1,0 +1,9 @@
+#cloud-config
+# Installe Docker + le plugin compose au premier démarrage de la VM (Ubuntu 24.04)
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-v2
+runcmd:
+  - systemctl enable --now docker
+  - usermod -aG docker azureuser
