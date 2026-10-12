@@ -1,0 +1,57 @@
+variables:
+  DOCKER_CONTAINER_NAME: "nom-image-docker-ici"
+
+stages:
+  - build
+  - test
+  - packaging
+  - deploy
+
+build-app:
+  stage: build
+  image: node:26.9-alpine3.24
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+
+unit-testing:
+  dependencies: []
+  image: node:26.9-alpine3.24
+  stage: test
+  script:
+    - npm ci
+    - npm run test
+  artifacts:
+    paths:
+      - reports/html/
+    reports:
+      junit: reports/junit.xml
+
+check-vulnerabilities:
+  dependencies: []
+  image: 
+    name: aquasec/trivy:0.74.0
+    entrypoint: [""]
+  stage: test
+  script:
+    - trivy fs --severity HIGH,CRITICAL -f json -o dependencies-vulnerabilities.json .
+  artifacts:
+    paths:
+      - dependencies-vulnerabilities.json
+
+packaging-app:
+  dependencies: []
+  image: docker:29
+  services:
+    - docker:29-dind
+  stage: packaging
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA  .
+    - docker push -a $CI_REGISTRY_IMAGE
+
+## TODO: Réaliser un job de déploiement en lien avec Microsoft Azure
