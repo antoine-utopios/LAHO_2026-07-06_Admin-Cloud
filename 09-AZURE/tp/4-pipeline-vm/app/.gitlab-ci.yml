@@ -54,4 +54,30 @@ packaging-app:
     - docker build -t $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA  .
     - docker push -a $CI_REGISTRY_IMAGE
 
-## TODO: Réaliser un job de déploiement en lien avec Microsoft Azure
+## Variables à crééer sur Gitlab CI
+# - AZURE_VM_USER: L'utilisateur utilisé par la machine virtuelle Azure (par défaut 'azureuser')
+# - AZURE_VM_PUBLIC_IP: L'adresse IP publique de la machine virtuelle Azure, récupérée dans l'interface Machine Virtuelle
+# - PRIVATE_KEY_B64: La clé privée .pem permettant de se connecter à la machine virtuelle EC2 (masked / hidden)
+# - KNOWN_HOSTS_B64: Le contenu du fichier known_host permettant d'éviter la question de confirmation lors de la connexion du runner à l'instance (généré par la commande ssh-keyscan -H -t ssh-rsa $AZURE_VM_PUBLIC_IP)
+
+## Pour générer notre clé SSH, on utilise la commande ssh-keygen -t rsa -b 2048 -C "johndoe@example.com" -f ~/.ssh/id_rsa_azure_vm -N ""
+## Pour lire ensuite la clé: cat ~/.ssh/id_rsa_azure_vm.pub
+
+# URL: https://gitlab.com/<nom-groupe>/<nom-repo>.git
+# PAT: Votre token ici
+# Template: https://oauth:<token>@gitlab.com/<nom-groupe>/<nom-repo>.git
+
+deploy-app:
+  dependencies: []
+  image: alpine:3.24.2
+  stage: deploy
+  before_script:
+  - apk update
+  - apk add openssh-client
+  - mkdir -p ~/.ssh/
+  - echo $PRIVATE_KEY_B64 | base64 -d > ~/.ssh/id_rsa
+  - chmod 600 ~/.ssh/id_rsa
+  - echo $KNOWN_HOSTS_B64 | base64 -d > ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts
+  script:
+    - ssh -i ~/.ssh/id_rsa ${AZURE_VM_USER}@${AZURE_VM_PUBLIC_IP} "echo $CI_REGISTRY_PASSWORD | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin && docker pull $CI_REGISTRY_IMAGE:latest && docker stop $DOCKER_CONTAINER_NAME || true && docker rm $DOCKER_CONTAINER_NAME || true && docker run -d --name $DOCKER_CONTAINER_NAME --restart always -p 80:80 $CI_REGISTRY_IMAGE:latest"
