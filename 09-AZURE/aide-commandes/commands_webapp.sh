@@ -107,7 +107,7 @@ az webapp log config \
   --level information
 
 # Vérification du déploiement
-echo "https://app-formateur-cloud.azurewebsites.net"
+curl "https://app-formateur-cloud.azurewebsites.net"
 
 # Vérification des ressources liées
 az resource list \
