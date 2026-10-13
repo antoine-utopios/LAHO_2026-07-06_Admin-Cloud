@@ -1,0 +1,12 @@
+{
+  "name": "functions-demo",
+  "version": "1.0.0",
+  "description": "Demo app for the Azure Functions lab",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0"
+  }
+}

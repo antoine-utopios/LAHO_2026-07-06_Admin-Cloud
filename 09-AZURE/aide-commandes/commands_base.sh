@@ -31,3 +31,9 @@ az group delete \
     --name "rg-formateur-cloud" \
     --yes \
     --no-wait
+
+# Récupérer la Subscription ID
+az account show --query id -o tsv
+
+# Créer un Service Principal limité à un groupe de ressource spécifique
+az ad sp create-for-rbac --name "sp-formateur-cloud" --role Contributor --scopes "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx/resourceGroups/rg-formateur-cloud"
