@@ -1,0 +1,119 @@
+# =============================================================================
+# GitLab CI -> Azure App Service (zip deploy, slot staging + swap manuel)
+#
+# Prérequis côté Azure :
+#   - Un App Service Plan S1 minimum (les slots n'existent pas sur B1)
+#   - Une web app et un slot nommé "staging" (az webapp deployment slot create)
+#   - Un service principal limité au resource group :
+#       az ad sp create-for-rbac \
+#         --name sp-gitlab-lab \
+#         --role Contributor \
+#         --scopes /subscriptions/<SUB_ID>/resourceGroups/<RG>
+#     La commande renvoie : appId, password, tenant
+#
+# Variables CI/CD à créer dans GitLab (Settings -> CI/CD -> Variables) :
+#   AZURE_CLIENT_ID        = appId renvoyé par la commande ci-dessus
+#   AZURE_CLIENT_SECRET    = password renvoyé par la commande   [Masked, Protected]
+#   AZURE_TENANT_ID        = tenant renvoyé par la commande
+#   AZURE_SUBSCRIPTION_ID  = résultat de : az account show --query id -o tsv
+#   AZURE_RESOURCE_GROUP   = nom du resource group (ex. rg-formateur-cloud)
+#   AZURE_WEBAPP_NAME      = nom de la web app (sans .azurewebsites.net)
+#
+# Remarques :
+#   - Une variable "Protected" n'est exposée que sur les branches/tags protégés :
+#     la branche par défaut (main) doit donc être protégée (c'est le cas par défaut).
+#   - Si GitLab refuse de masquer le secret (caractères non autorisés),
+#     régénère-le avec : az ad sp credential reset --id <appId>
+#   - Nettoyage en fin de lab : az group delete -n <RG> --yes --no-wait
+#     puis : az ad sp delete --id <appId>
+# =============================================================================
+
+stages:
+  - build
+  - staging
+  - production
+
+variables:
+  APP_DIR: app
+
+# Template caché : image Azure CLI + connexion/déconnexion du service principal
+.azure_cli:
+  image:
+    name: mcr.microsoft.com/azure-cli:latest
+    entrypoint: [""]   # nécessaire pour que GitLab puisse lancer ses scripts
+  before_script:
+    - echo "Logging in with the service principal"
+    - az login --service-principal
+        --username "$AZURE_CLIENT_ID"
+        --password "$AZURE_CLIENT_SECRET"
+        --tenant "$AZURE_TENANT_ID"
+    - az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+  after_script:
+    - az logout || true   # ne fait pas échouer le job si la déconnexion échoue
+
+build:
+  stage: build
+  image: node:24-alpine   # à garder aligné avec le runtime de l'App Service (NODE:24-lts)
+  before_script:
+    - apk add --no-cache zip
+  script:
+    - cd "$APP_DIR"
+    - npm ci --omit=dev                    # installe uniquement les dépendances de production
+    - zip -r ../app.zip . -x "*.git*"      # archive envoyée telle quelle à Azure
+  artifacts:
+    paths:
+      - app.zip
+    expire_in: 1 hour   # l'archive ne sert que pour les jobs suivants de ce pipeline
+
+deploy_staging:
+  extends: .azure_cli
+  stage: staging
+  needs: ["build"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH   # uniquement sur la branche par défaut
+  environment:
+    name: staging
+    url: https://$AZURE_WEBAPP_NAME-staging.azurewebsites.net
+  script:
+    - echo "Deploying app.zip to $AZURE_WEBAPP_NAME (staging slot)"
+    - az webapp deploy
+        --name "$AZURE_WEBAPP_NAME"
+        --resource-group "$AZURE_RESOURCE_GROUP"
+        --slot staging
+        --src-path app.zip
+        --type zip
+
+# Job séparé : s'il échoue, le swap vers la production est bloqué.
+# Image curl dédiée, car l'image azure-cli n'est pas garantie d'embarquer curl.
+smoke_test_staging:
+  stage: staging
+  image:
+    name: curlimages/curl:latest
+    entrypoint: [""]
+  needs: ["deploy_staging"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - echo "Smoke test on the staging slot"
+    # --retry-all-errors : le démarrage à froid peut renvoyer des erreurs au début
+    - curl --fail --retry 5 --retry-delay 10 --retry-all-errors
+        "https://$AZURE_WEBAPP_NAME-staging.azurewebsites.net/health"
+
+swap_to_production:
+  extends: .azure_cli
+  stage: production
+  needs: ["smoke_test_staging"]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual   # validation humaine avant le swap (bouton "Play" dans GitLab)
+  environment:
+    name: production
+    url: https://$AZURE_WEBAPP_NAME.azurewebsites.net
+  script:
+    - echo "Swapping staging to production"
+    # Rollback : relancer ce même swap rétablit l'ancienne version
+    - az webapp deployment slot swap
+        --name "$AZURE_WEBAPP_NAME"
+        --resource-group "$AZURE_RESOURCE_GROUP"
+        --slot staging
+        --target-slot production
