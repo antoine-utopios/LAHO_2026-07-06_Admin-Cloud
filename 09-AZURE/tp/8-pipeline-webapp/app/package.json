@@ -1,0 +1,12 @@
+{
+  "name": "azure-demo-app",
+  "version": "1.0.0",
+  "description": "Minimal Node.js app for the Azure App Service exercises",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
