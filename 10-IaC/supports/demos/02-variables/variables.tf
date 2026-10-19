@@ -4,6 +4,12 @@ variable "image_name" {
   default     = "nginx:alpine"
 }
 
+variable "container_prefix" {
+  type = string
+  description = "Le prefix servant au nommage des conteneurs"
+  default = "demo"
+}
+
 ## VARIABLES POUR BOUCLE - COUNT 
 
 # Les noms de servers
@@ -33,6 +39,7 @@ variable "web_servers" {
   description = "Les ports externe des serveurs webs"
   default = {
     "web" = 8080
+    "admin" = 8081
     "shop" = 8082
   }
 }

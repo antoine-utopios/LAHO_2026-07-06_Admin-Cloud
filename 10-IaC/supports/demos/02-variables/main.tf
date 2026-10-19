@@ -63,7 +63,7 @@ resource "docker_image" "nginx" {
 resource "docker_container" "web" {
   for_each = var.web_servers
   image = docker_image.nginx.image_id
-  name  = each.key
+  name  = "${var.container_prefix}-${each.key}"
 
   ports {
     internal = 80
