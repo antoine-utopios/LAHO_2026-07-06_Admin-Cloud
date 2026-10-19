@@ -33,7 +33,7 @@ resource "docker_container" "database" {
   name  = "${var.container_prefix}-db"
 
   ports {
-    internal = 80
+    internal = 3306
     external = var.database_ext_port
   }
 
