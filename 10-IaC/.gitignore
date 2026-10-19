@@ -1,0 +1,34 @@
+
+# ---------- Terraform ----------
+# Dossiers de providers/modules téléchargés
+**/.terraform/*
+
+# State : peut contenir des secrets en clair, ne jamais commiter
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Logs de crash
+crash.log
+crash.*.log
+
+# Variables : peuvent contenir des secrets (mots de passe, tokens, clés)
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Overrides locaux
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Plans sauvegardés
+*.tfplan
+tfplan
+
+# Config CLI locale
+.terraformrc
+terraform.rc
+
+# NB : on COMMIT .terraform.lock.hcl (verrouille les versions des providers)
