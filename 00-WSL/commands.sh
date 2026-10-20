@@ -57,3 +57,9 @@ az version
 
 az login --use-device-code
 az account show
+
+## Vérification
+docker --version && docker compose version
+terraform -version
+ansible --version
+az version --output table
