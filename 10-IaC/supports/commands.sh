@@ -28,3 +28,9 @@ terraform apply
 
 # Retirer ce que Terraform a appliqué
 terraform destroy
+
+# Observer l'état Terraform - Listing des adresses
+terraform state list
+
+# Observer l'état détaillé d'une entité Terraform
+terraform state show <adresse-entite>
