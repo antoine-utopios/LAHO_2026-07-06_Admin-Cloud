@@ -1,0 +1,89 @@
+---
+- name: Configurer les serveurs webs
+  hosts: web
+  become: true
+  tasks:
+    - name: Installer NGINX & CURL
+      ansible.builtin.apt:
+        name: 
+          - nginx
+          - curl
+        state: present
+        update_cache: true
+        cache_valid_time: 300
+    - name: Mettre la page d'accueil au bon endroit
+      ansible.builtin.copy:
+        dest: /var/www/html/index.html
+        content: |
+          <!DOCTYPE html>
+          <html>
+            <head><title>Hello</title></head>
+            <body><h1>Hello World!</h1></body>
+          </html>
+        owner: ansible
+        group: ansible
+        mode: "0644"
+
+    # - name: Lancer le service NGINX
+    #   ansible.builtin.command:
+    #     cmd: service nginx start
+
+    - name: Lancer le service NGINX
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    # - name: Vérifier que le site web est dispo
+    #   ansible.builtin.command:
+    #     cmd: curl -fs localhost
+    #     register: curl_result
+    #     failed_when: "'Hello World' not in curl_result.stdout"
+
+    - name: Vérifier que le site web est dispo
+      ansible.builtin.wait_for:
+        port: 80
+        host: 127.0.0.1
+        timeout: 60
+
+- name: Configurer le serveur de base de données
+  hosts: db
+  become: true
+  tasks:
+    - name: Installer MYSQL
+      ansible.builtin.apt:
+        name: 
+          - mysql-server
+        state: present
+        update_cache: true
+        cache_valid_time: 300
+
+# - name: Créer les dossier utilisés par le SGBD
+#   ansible.builtin.file:
+#     path: /var/run/mysqld
+#     state: directory
+#     owner: mysql
+#     group: mysql
+#     mode: "0755"
+
+# - name: Lancer le service MYSQL
+#   ansible.builtin.command:
+#     cmd: service mysql start
+
+    - name: Lancer le service MYSQL
+      ansible.builtin.service:
+        name: mysql
+        state: started
+        enabled: true
+
+# - name: Vérifier que le site web est dispo
+#   ansible.builtin.command:
+#     cmd: mysqladmin ping
+#     register: ping_result
+#     failed_when: "'is alive' not in ping_result.stdout"
+
+    - name: Vérifier que le site web est dispo
+      ansible.builtin.wait_for:
+        port: 3306
+        host: 127.0.0.1
+        timeout: 60
