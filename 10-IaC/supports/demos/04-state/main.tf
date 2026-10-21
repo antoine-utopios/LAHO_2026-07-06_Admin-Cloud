@@ -1,11 +1,11 @@
-# import {
-#   to = docker_network.demo_net
-#   id = "8a0d49b58b8db8ecd3304337b1feb1c59c693ae4460de387ee7e6244b64b12a5"
-# }
+import {
+  to = docker_network.demo_net
+  id = "8a0d49b58b8db8ecd3304337b1feb1c59c693ae4460de387ee7e6244b64b12a5"
+}
 
-# resource "docker_network" "demo_net" {
-#   name = "demo-net"
-# }
+resource "docker_network" "demo_net" {
+  name = "demo-net"
+}
 
 removed {
   from = docker_network.demo_net
