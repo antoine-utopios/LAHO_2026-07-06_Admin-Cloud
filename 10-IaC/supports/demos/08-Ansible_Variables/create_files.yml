@@ -1,0 +1,61 @@
+## Précédence pour les variables
+# - group_vars/all.yml => Commun à l'ensemble des groupes d'hôtes
+# - group_vars/*.yml => Spécifique à un groupe d'hôtes
+# - host_vars/all.yml => Commun à l'ensemble des hôtes
+# - host_vars/*.yml => Spécifique pour un hôte
+# - 'vars' dans le Playbook => commun à l'ensemble du play
+
+
+# PLAYBOOK -> Ensemble de PLAYS -> Ensemble de TASKS
+
+---
+- name: S'assurer de la présence des fichiers dans les serveurs
+  hosts: all
+  become: true
+  # vars:
+  #   ma_variable: "Hello world pour la BdD\n"
+  tasks: 
+    - name: Installer le paquet 'tree'
+      ansible.builtin.apt:
+        name: tree # On regarde ce paquet...
+        state: present # ...il faut qu'il soit présent (valeurs possible: absent, fixed, latest, present)
+        update_cache: true # Faire un 'apt update'...
+        cache_valid_time: 300 # ...si le dernier date d'il y a plus de 5min
+    - name: Installer le paquet 'nginx'
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+        cache_valid_time: 300
+    - name: Démarrer le service nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+    - name: Créer un fichier de test
+      ansible.builtin.copy:
+        # src: "~/emplacement/sur/pc/master" => Si on veut copier un fichier depuis le PC Master (Master Node)
+        content: "{{ ma_variable }}" # Pour spécifier le contenu du fichier
+        dest: /home/ansible/test-variable.txt
+    - name: Créer un fichier de page d'accueil
+      ansible.builtin.copy:
+        content: |
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>{{ ma_variable }}</title>
+          </head>
+          <body>
+              <p>{{ ma_variable }}</p>
+          </body>
+          </html>
+        dest: /home/ansible/index.html
+        owner: ansible
+        group: ansible
+        mode: "0644"
+      
+    - name: Afficher le contenu de la variable
+      ansible.builtin.debug:
+        msg: "ma_variable: {{ ma_variable }}"
