@@ -1,0 +1,32 @@
+cle_string: "valeur"
+cle_number: 123456
+cle_booleen: true
+
+cle_list_vide: []
+
+cle_list_string_monoline: [ valeurA, valeurB, valeurC ]
+
+cle_list_string_multiline: 
+  - valeurA
+  - valeurB
+  - valeurC
+
+cle_map_vide: {}
+
+cle_map_chaises_monoline: { nb_pied: 4, couleur: verte, cassee: true }
+
+cle_map_chaises_multiline:
+  nb_pied: 4
+  couleur: verte
+  cassee: true
+
+cle_list_chaises: 
+  - nb_pied: 4 
+    couleur: verte
+    cassee: true
+  - nb_pied: 6 
+    couleur: bleue
+    cassee: false
+  - nb_pied: 3
+    couleur: rouge
+    cassee: true
