@@ -1,0 +1,15 @@
+# PLAYBOOK -> Ensemble de PLAYS -> Ensemble de TASKS
+
+---
+- name: S'assurer de la présence des fichiers dans les serveurs
+  hosts: all
+  become: true
+  tasks: 
+    - name: Installer le paquet 'tree'
+      ansible.builtin.apt:
+        name: tree
+        state: present
+    - name: Créer un fichier de test
+      ansible.builtin.copy:
+        content: "Hello world\n"
+        dest: ~/test.txt
